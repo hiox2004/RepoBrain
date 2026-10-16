@@ -1,0 +1,6 @@
+{
+  "name": "RepoBrain: Autonomous Codebase Memory & Execution Harness",
+  "description": "Production-grade MCP codebase memory, parent-child AST chunker, hybrid RRF retriever, episodic self-healing bug cache, and bounded 3-retry execution harness.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
