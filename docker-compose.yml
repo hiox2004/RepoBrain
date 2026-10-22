@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: repobrain-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: repobrain
+      POSTGRES_PASSWORD: repobrain_dev_secret
+      POSTGRES_DB: repobrain
+    ports:
+      - "5432:5432"
+    volumes:
+      - repobrain_pgdata:/var/lib/postgresql/data
+      - ./sql/00_UNIFIED_SCHEMA.sql:/docker-entrypoint-initdb.d/00_UNIFIED_SCHEMA.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repobrain -d repobrain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  repobrain_pgdata:
+    driver: local
+

@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RepoBrain — Beginner to CTO Engineering & Architecture Masterguide</title>
+  <style>
+    :root {
+      --bg: #060a12;
+      --bg-alt: #0b1120;
+      --card: #111a2e;
+      --card-alt: #16223be6;
+      --border: #243456;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --cyan: #38bdf8;
+      --indigo: #818cf8;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --purple: #c084fc;
+      --mono: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Consolas, monospace;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.68;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      width: 315px;
+      background: var(--bg-alt);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 1.4rem 1.1rem;
+      z-index: 100;
+    }
+    .brand {
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      margin-bottom: 0.45rem;
+    }
+    .brand h1 {
+      font-size: 1.22rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .brand p {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .mode-switcher {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem;
+      margin-bottom: 0.9rem;
+    }
+    .mode-switcher label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--amber);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+    }
+    .mode-btns {
+      display: flex;
+      gap: 0.35rem;
+    }
+    .mode-btn {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0.35rem 0.25rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .mode-btn.active {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--cyan);
+      border-color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .nav-search {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.48rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .nav-search:focus { outline: 1px solid var(--cyan); }
+
+    .nav-group {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0.95rem 0 0.4rem 0.35rem;
+    }
+    .nav-list { list-style: none; }
+    .nav-list li a {
+      display: block;
+      padding: 0.42rem 0.65rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      border-radius: 6px;
+      transition: all 0.15s;
+      margin-bottom: 0.12rem;
+    }
+    .nav-list li a:hover {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--cyan);
+    }
+
+    /* Main Content Container */
+    main.content {
+      margin-left: 315px;
+      flex: 1;
+      padding: 2.5rem 3.25rem 5rem;
+      max-width: 1200px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.14) 0%, rgba(129, 140, 248, 0.08) 50%, rgba(52, 211, 153, 0.08) 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.25rem;
+      margin-bottom: 2.75rem;
+    }
+    .hero h2 {
+      font-size: 2.05rem;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 0.7rem;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 900px;
+      margin-bottom: 1.2rem;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+    .tech-pill {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      padding: 0.28rem 0.65rem;
+      border-radius: 6px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    /* Section Styling */
+    section.module {
+      margin-bottom: 4.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .module-kicker {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .module-title {
+      font-size: 1.68rem;
+      color: #fff;
+      margin: 0.2rem 0 1.25rem;
+    }
+
+    /* 4 Pedagogical Tier Boxes */
+    .tier-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.35rem 1.55rem;
+      margin-bottom: 1.2rem;
+    }
+    .tier-beginner { border-left: 4px solid var(--emerald); }
+    .tier-mechanics { border-left: 4px solid var(--cyan); }
+    .tier-math { border-left: 4px solid var(--indigo); }
+    .tier-cto { border-left: 4px solid var(--amber); }
+
+    .tier-tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.18rem 0.55rem;
+      border-radius: 4px;
+      margin-bottom: 0.65rem;
+    }
+    .tag-beginner { background: rgba(52, 211, 153, 0.14); color: var(--emerald); }
+    .tag-mechanics { background: rgba(56, 189, 248, 0.14); color: var(--cyan); }
+    .tag-math { background: rgba(129, 140, 248, 0.14); color: var(--indigo); }
+    .tag-cto { background: rgba(251, 191, 36, 0.14); color: var(--amber); }
+
+    h3 { font-size: 1.16rem; color: #fff; margin-bottom: 0.5rem; }
+    h4 { font-size: 0.98rem; color: var(--cyan); margin: 0.9rem 0 0.35rem; }
+    p { color: var(--muted); margin-bottom: 0.8rem; font-size: 0.95rem; }
+    ul, ol { margin: 0.45rem 0 0.95rem 1.35rem; color: var(--muted); font-size: 0.94rem; }
+    li { margin-bottom: 0.38rem; }
+    li strong { color: var(--text); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.1rem; margin: 0.9rem 0; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1rem; margin: 0.9rem 0; }
+    .sub-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.05rem;
+    }
+
+    code {
+      font-family: var(--mono);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--cyan);
+      padding: 0.14rem 0.38rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    pre {
+      background: #04070e;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.05rem 1.2rem;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      margin: 0.8rem 0 1.1rem;
+      line-height: 1.55;
+    }
+
+    /* SVG Diagram Box */
+    .svg-box {
+      background: #070c18;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.3rem;
+      margin: 1.1rem 0;
+      overflow-x: auto;
+      text-align: center;
+    }
+    .svg-caption {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.95rem 0 1.3rem;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.78rem 0.95rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.87rem;
+    }
+    th {
+      background: rgba(56, 189, 248, 0.09);
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+    td { color: var(--muted); }
+
+    /* Interactive Simulators */
+    .sim-box {
+      background: linear-gradient(180deg, #131f38 0%, #0b1324 100%);
+      border: 1px solid var(--cyan);
+      border-radius: 12px;
+      padding: 1.35rem;
+      margin: 1.25rem 0;
+    }
+    .sim-header {
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      color: var(--cyan);
+      margin-bottom: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .sim-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      margin-bottom: 0.95rem;
+    }
+    .sim-field {
+      flex: 1;
+      min-width: 175px;
+    }
+    .sim-field label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.28rem;
+    }
+    .sim-field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 0.48rem 0.65rem;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+    }
+    .sim-output {
+      background: #04070e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1.05rem;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+      color: var(--emerald);
+    }
+
+    /* Quiz Cards */
+    .quiz-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.3rem;
+      margin-bottom: 0.95rem;
+    }
+    .quiz-btn {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 0.38rem 0.85rem;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-top: 0.45rem;
+    }
+    .quiz-btn:hover { background: rgba(56, 189, 248, 0.26); }
+    .quiz-reveal {
+      display: none;
+      margin-top: 0.8rem;
+      padding-top: 0.8rem;
+      border-top: 1px dashed var(--border);
+      color: var(--emerald);
+      font-size: 0.89rem;
+    }
+
+    @media (max-width: 980px) {
+      aside.sidebar { position: static; width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      body { flex-direction: column; }
+      main.content { margin-left: 0; padding: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-badge">BEGINNER TO CTO MASTERGUIDE</span>
+      <h1>RepoBrain OS</h1>
+      <p>AST Memory, Hybrid RRF, Episodic Learning, Domain CRAG &amp; Bounded MCP Harness</p>
+    </div>
+
+    <div class="mode-switcher">
+      <label>Reading Depth Filter:</label>
+      <div class="mode-btns">
+        <button class="mode-btn active" onclick="setDepth('all', this)">All Tiers</button>
+        <button class="mode-btn" onclick="setDepth('beginner', this)">Beginner</button>
+        <button class="mode-btn" onclick="setDepth('cto', this)">CTO / Math</button>
+      </div>
+    </div>
+
+    <input type="text" id="navSearch" class="nav-search" placeholder="Filter modules or concepts..." oninput="filterSidebar()" />
+
+    <div class="nav-group">Part I: Core Concepts &amp; Data</div>
+    <ul class="nav-list" id="navLinks">
+      <li><a href="#m1">01. Why We Build RepoBrain</a></li>
+      <li><a href="#m2">02. UTF-8 Bytes &amp; Tree-sitter ASTs</a></li>
+      <li><a href="#m3">03. Embeddings &amp; pgvector HNSW</a></li>
+      <li><a href="#m4">04. Lexical BM25 &amp; Identifier Split</a></li>
+      <li><a href="#m5">05. Hybrid RRF &amp; Cross-Encoders</a></li>
+      <div class="nav-group">Part II: Self-Correcting Brains</div>
+      <li><a href="#m6">06. Episodic &amp; Domain Research RAG</a></li>
+      <li><a href="#m7">07. GitHub Base-Build Stockroom</a></li>
+      <li><a href="#m8">08. Chief Lead vs. Cheap Workers</a></li>
+      <div class="nav-group">Part III: Execution &amp; Build Guide</div>
+      <li><a href="#m9">09. FastMCP stdio &amp; Sandbox Loop</a></li>
+      <li><a href="#m10">10. Complete Build &amp; Setup Guide</a></li>
+      <li><a href="#m11">11. 8-Question CTO Mastery Check</a></li>
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+
+    <!-- HERO -->
+    <div class="hero">
+      <h2>RepoBrain: From First Principles to Principal Systems Architecture</h2>
+      <p>
+        This interactive handbook teaches you every foundational concept—from how source code is stored in UTF-8 bytes and parsed into syntax trees, to how vector spaces, inverted indexes, Reciprocal Rank Fusion (RRF), self-correcting episodic memory, and sandboxed Model Context Protocol (MCP) servers work together. You can use this exact system with your <strong>Claude Code subscription</strong>, <strong>OpenAI Codex subscription</strong>, <strong>Google Antigravity IDE</strong>, and <strong>local Open-Source Models</strong>.
+      </p>
+      <div class="badge-row">
+        <span class="tech-pill">Tree-sitter UTF-8 ASTs</span>
+        <span class="tech-pill">PostgreSQL 16 + pgvector HNSW</span>
+        <span class="tech-pill">Split-Identifier BM25 GIN</span>
+        <span class="tech-pill">RRF (k=60) + Cross-Encoder</span>
+        <span class="tech-pill">Self-Correcting Episodic Memory</span>
+        <span class="tech-pill">Token-Sparing Research CRAG</span>
+        <span class="tech-pill">GitHub Template Stockroom</span>
+        <span class="tech-pill">FastMCP Bounded Sandbox</span>
+      </div>
+    </div>
+
+    <!-- MODULE 01 -->
+    <section class="module" id="m1">
+      <div class="module-kicker">Module 01 — Vision, Problem Statement &amp; Token Economics</div>
+      <h2 class="module-title">Why We Are Building RepoBrain (And Why Naive Agents Burn Tokens)</h2>
+
+      <div class="tier-card tier-beginner">
+        <span class="tier-tag tag-beginner">Tier 1: Beginner Intuition — The "Amnesiac Contractor" Problem</span>
+        <h3>What Happens When a Coding Agent Has No Structured Memory?</h3>
+        <p>
+          Picture hiring a software contractor who walks into your codebase every morning with zero memory of yesterday:
+        </p>
+        <ul>
+          <li><strong>Problem 1 — Context Bloat &amp; "Lost in the Middle":</strong> To change a 20-line billing function, a naive agent dumps 12 entire files (15,000 tokens) into its prompt. Research proves LLMs suffer from a U-shaped attention curve: they remember the very beginning and very end of a massive prompt, but hallucinate details in the middle.</li>
+          <li><strong>Problem 2 — Alphanumeric Blindness:</strong> When looking for <code>updateUserById</code>, standard vector search compresses words into fuzzy concepts and returns <code>getUserById</code> instead because both "sound like user database lookups."</li>
+          <li><strong>Problem 3 — Non-Deterministic Self-Verification Bias:</strong> When asked "Did your fix work?", an LLM reading its own code suffers from confirmation bias (<em>"The table balanced and was still wrong"</em>), or loops 10 times in a terminal burning $5 in tokens and editing your unit tests just to make them pass.</li>
+          <li><strong>Problem 4 — Mindless Research Token Burn:</strong> Every time it needs documentation for FastAPI, Stripe, or Tree-sitter, it scrapes raw HTML webpages (40,000+ tokens of navbars and ads) and forgets them immediately after the session ends.</li>
+        </ul>
+      </div>
+
+      <div class="tier-card tier-mechanics">
+        <span class="tier-tag tag-mechanics">Tier 2: System Mechanics — The 4-Pillar RepoBrain Operating System</span>
+        <h3>One Unified FastMCP Engine Connecting 3 Compounding Memories + 1 Sandbox</h3>
+        <div class="svg-box">
+          <svg width="940" height="350" viewBox="0 0 940 350" xmlns="http://www.w3.org/2000/svg">
+            <rect x="190" y="12" width="560" height="58" rx="10" fill="#16223b" stroke="#38bdf8" stroke-width="2"/>
+            <text x="470" y="36" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="13" font-weight="bold">CHIEF CODING AGENT (Claude Code / Codex / Antigravity IDE / Local OSS)</text>
+            <text x="470" y="56" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="11">Model Context Protocol (FastMCP over stdio JSON-RPC | Strict stderr log isolation)</text>
+
+            <line x1="470" y1="70" x2="470" y2="105" stroke="#38bdf8" stroke-width="2"/>
+            <line x1="120" y1="105" x2="820" y2="105" stroke="#38bdf8" stroke-width="2"/>
+            <line x1="120" y1="105" x2="120" y2="135" stroke="#38bdf8" stroke-width="2"/>
+            <line x1="355" y1="105" x2="355" y2="135" stroke="#818cf8" stroke-width="2"/>
+            <line x1="585" y1="105" x2="585" y2="135" stroke="#34d399" stroke-width="2"/>
+            <line x1="820" y1="105" x2="820" y2="135" stroke="#fbbf24" stroke-width="2"/>
+
+            <rect x="15" y="135" width="215" height="195" rx="10" fill="#0b1120" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="122" y="160" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="bold">1. CODEBASE AST BRAIN</text>
+            <text x="28" y="184" fill="#cbd5e1" font-family="monospace" font-size="10.5">Tool: search_codebase()</text>
+            <text x="28" y="206" fill="#94a3b8" font-family="monospace" font-size="10.5">• UTF-8 Tree-sitter Walker</text>
+            <text x="28" y="225" fill="#94a3b8" font-family="monospace" font-size="10.5">• Parent (Imports/Class)</text>
+            <text x="28" y="244" fill="#94a3b8" font-family="monospace" font-size="10.5">• Child (Func/Type Schema)</text>
+            <text x="28" y="263" fill="#94a3b8" font-family="monospace" font-size="10.5">• pgvector HNSW + BM25 GIN</text>
+            <text x="28" y="282" fill="#94a3b8" font-family="monospace" font-size="10.5">• RRF (k=60) + CrossEncoder</text>
+            <text x="28" y="308" fill="#34d399" font-family="monospace" font-size="10">Saves 80% File Read Tokens</text>
+
+            <rect x="245" y="135" width="215" height="195" rx="10" fill="#0b1120" stroke="#818cf8" stroke-width="1.5"/>
+            <text x="352" y="160" text-anchor="middle" fill="#818cf8" font-family="monospace" font-size="12" font-weight="bold">2. EPISODIC FIX MEMORY</text>
+            <text x="258" y="184" fill="#cbd5e1" font-family="monospace" font-size="10.5">Auto-Triggered on Pass</text>
+            <text x="258" y="206" fill="#94a3b8" font-family="monospace" font-size="10.5">• Captures Fail -> Pass</text>
+            <text x="258" y="225" fill="#94a3b8" font-family="monospace" font-size="10.5">• Stores Error Signatures</text>
+            <text x="258" y="244" fill="#94a3b8" font-family="monospace" font-size="10.5">• Distills Root-Cause Fix</text>
+            <text x="258" y="263" fill="#94a3b8" font-family="monospace" font-size="10.5">• Enforces Project ADRs</text>
+            <text x="258" y="282" fill="#94a3b8" font-family="monospace" font-size="10.5">• Cross-Project Recall</text>
+            <text x="258" y="308" fill="#818cf8" font-family="monospace" font-size="10">Stops Repeat Bug Loops</text>
+
+            <rect x="475" y="135" width="220" height="195" rx="10" fill="#0b1120" stroke="#34d399" stroke-width="1.5"/>
+            <text x="585" y="160" text-anchor="middle" fill="#34d399" font-family="monospace" font-size="12" font-weight="bold">3. RESEARCH &amp; TEMPLATES</text>
+            <text x="488" y="184" fill="#cbd5e1" font-family="monospace" font-size="10.5">Tool: research_and_templates()</text>
+            <text x="488" y="206" fill="#94a3b8" font-family="monospace" font-size="10.5">• Local RFC &amp; Docs Index</text>
+            <text x="488" y="225" fill="#94a3b8" font-family="monospace" font-size="10.5">• GitHub Base-Build Stock</text>
+            <text x="488" y="244" fill="#94a3b8" font-family="monospace" font-size="10.5">• Relevance Gate (≥0.75)</text>
+            <text x="488" y="263" fill="#94a3b8" font-family="monospace" font-size="10.5">• 1-Hop Web CRAG Compactor</text>
+            <text x="488" y="282" fill="#94a3b8" font-family="monospace" font-size="10.5">• Cites File/Line to User</text>
+            <text x="488" y="308" fill="#34d399" font-family="monospace" font-size="10">Saves 90% Doc Scrape Tokens</text>
+
+            <rect x="710" y="135" width="215" height="195" rx="10" fill="#0b1120" stroke="#fbbf24" stroke-width="1.5"/>
+            <text x="817" y="160" text-anchor="middle" fill="#fbbf24" font-family="monospace" font-size="12" font-weight="bold">4. BOUNDED SANDBOX</text>
+            <text x="722" y="184" fill="#cbd5e1" font-family="monospace" font-size="10.5">Tool: apply_git_patch()</text>
+            <text x="722" y="206" fill="#94a3b8" font-family="monospace" font-size="10.5">• git apply --check Gate</text>
+            <text x="722" y="225" fill="#94a3b8" font-family="monospace" font-size="10.5">• Surgical Byte Snapshot</text>
+            <text x="722" y="244" fill="#94a3b8" font-family="monospace" font-size="10.5">• Live Git-SHA AST Sync</text>
+            <text x="722" y="263" fill="#94a3b8" font-family="monospace" font-size="10.5">• Docker --network=none</text>
+            <text x="722" y="282" fill="#94a3b8" font-family="monospace" font-size="10.5">• Traceback Frame Filter</text>
+            <text x="722" y="308" fill="#fb7185" font-family="monospace" font-size="10">Hard ≤3 Retry Rollback</text>
+          </svg>
+          <div class="svg-caption">Figure 1.1: RepoBrain's 4-Pillar Architecture connecting Frontier &amp; Open-Source Agents over FastMCP stdio.</div>
+        </div>
+      </div>
+
+      <div class="tier-card tier-cto">
+        <span class="tier-tag tag-cto">Tier 4: CTO Perspective — Honest Trade-Offs (When Does This Beat ripgrep?)</span>
+        <p>
+          As an experienced CTO, you must know when simple tools suffice vs. when RepoBrain shines:
+        </p>
+        <ul>
+          <li><strong>When `ripgrep` / LSP is enough:</strong> On a tiny 2,000-line script where you already know the exact function name, `ripgrep` takes 5ms.</li>
+          <li><strong>Where RepoBrain wins decisively:</strong> (1) When searching unfamiliar or 30,000+ line codebases conceptually (e.g., <em>"where do we throttle webhook retries?"</em> when the class is named <code>TokenBucketLimiter</code>); (2) When preventing agents from running 10 runaway test loops or corrupting uncommitted files; and (3) When compounding bug fixes and library research across multiple projects so you never pay tokens twice for the same mistake.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- MODULE 02 -->
+    <section class="module" id="m2">
+      <div class="module-kicker">Module 02 — Compiler Syntax Trees &amp; Data Handling</div>
+      <h2 class="module-title">Source Code as Data: UTF-8 Bytes, Tree-sitter &amp; Parent-Child ASTs</h2>
+
+      <div class="tier-card tier-beginner">
+        <span class="tier-tag tag-beginner">Tier 1: Beginner Intuition — Why 500-Character Chunking Breaks Code</span>
+        <h3>Never Chop a Recipe in Half Without the Ingredient List</h3>
+        <p>
+          If you split a Python file every 500 characters, you cut functions mid-loop. Even worse, if the LLM retrieves lines 120–145 of <code>src/billing/ledger.py</code>, it cannot see lines 1–18 (where <code>Decimal</code> and <code>InvoiceRequest</code> were imported) or line 25 (where <code>self.tax_rate</code> was initialized on the class).
+        </p>
+        <p>
+          RepoBrain uses <strong>Tree-sitter</strong> to parse code into a real syntax tree and splits every file into a linked <strong>Parent-Child pair</strong>:
+        </p>
+        <ul>
+          <li><strong><code>ASTParentNode</code> (1 per file):</strong> Captures top-level <code>imports_header</code> and <code>enclosing_scope</code> (class signatures and attributes).</li>
+          <li><strong><code>ASTChildNode</code> (1 per function, method, or data model):</strong> Captures the exact callable or schema (`node_kind` $\in$ `{"callable", "method", "type_definition"}`). When a Child Node matches a search, RepoBrain automatically packages it inside its Parent Node's imports and class header!</li>
+        </ul>
+      </div>
+
+      <div class="tier-card tier-mechanics">
+        <span class="tier-tag tag-mechanics">Tier 2: Under the Hood — The UTF-8 Byte Offset vs. Character Index Trap</span>
+        <h3>Why Multi-Byte Characters (<code>€</code>, <code>→</code>, <code>≤</code>) Corrupt Naive String Slicing</h3>
+        <p>
+          Tree-sitter parses raw C byte buffers and returns <code>node.start_byte</code> and <code>node.end_byte</code>. In UTF-8 encoding:
+        </p>
+        <ul>
+          <li>Standard ASCII letters (<code>a-z</code>, <code>0-9</code>) use <strong>1 byte per character</strong>.</li>
+          <li>Currency and math symbols (<code>€</code>, <code>→</code>, <code>≤</code>) use <strong>3 bytes per character</strong>.</li>
+          <li>Emojis (<code>🚀</code>) use <strong>4 bytes per character</strong>.</li>
+        </ul>
+        <p>
+          If a docstring contains <code># Returns € amount → total ≤ max</code>, those three symbols add <strong>+6 extra bytes</strong> compared to the Python string character count! If you slice <code>source_str[start_byte:end_byte]</code>, every function below that docstring is shifted by 6 characters, slicing off the end of your code. RepoBrain <strong>always</strong> slices raw bytes: <code>source_bytes[node.start_byte:node.end_byte].decode("utf-8")</code>.
+        </p>
+      </div>
+
+      <div class="sim-box">
+        <div class="sim-header">
+          <span>🔬 LIVE SIMULATOR: UTF-8 Byte Length vs. String Character Length</span>
+          <span>See why Tree-sitter byte offsets drift from string indices on Unicode symbols</span>
+        </div>
+        <div class="sim-controls">
+          <div class="sim-field">
+            <label for="utfInput">Type code or docstring with symbols (e.g., €, →, ≤, 🚀):</label>
+            <input type="text" id="utfInput" value="def settle(x): # € → ≤" oninput="runUtfSim()" />
+          </div>
+        </div>
+        <div class="sim-output" id="utfOutput"></div>
+      </div>
+
+      <div class="tier-card tier-math">
+        <span class="tier-tag tag-math">Tier 3: Code &amp; Hash Mechanics — Decorators, Schemas &amp; Git Blob SHAs</span>
+        <pre># 1. Unwrapping Decorators (Guardrail #2):
+# In tree-sitter-python, @router.post("/v1/pay") wraps `function_definition` inside a parent
+# `decorated_definition` node. Our chunker slices from `decorated_definition.start_byte` so
+# the route URL and decorator are never severed from the function body!
+
+# 2. Indexing Methodless Data Schemas (node_kind="type_definition"):
+# A Pydantic BaseModel or TypeScript interface has 0 methods. When `method_count == 0`,
+# ASTCodeChunker emits the entire class/interface as a Child Node with node_kind="type_definition".
+
+# 3. Instant Incremental Sync via Git Blob SHA (Guardrail #6):
+def compute_git_blob_sha(source_bytes: bytes) -> str:
+    header = f"blob {len(source_bytes)}\0".encode("utf-8")
+    return hashlib.sha1(header + source_bytes).hexdigest()</pre>
+      </div>
+    </section>
+
+    <!-- MODULE 03 -->
+    <section class="module" id="m3">
+      <div class="module-kicker">Module 03 — Semantic Vector Space &amp; Graph Indexing</div>
+      <h2 class="module-title">Embeddings, Cosine Distance (<code>&lt;=&gt;</code>) &amp; pgvector HNSW Graphs</h2>
+
+      <div class="tier-card tier-beginner">
+        <span class="tier-tag tag-beginner">Tier 1: Beginner Intuition — GPS Coordinates for Code Meaning</span>
+        <h3>How Does a Database Know That "Rollback" Means "Restore Snapshot"?</h3>
+        <p>
+          An embedding model (`nomic-ai/nomic-embed-text-v1.5`) reads a function's name, signature, docstring, and body, and converts its semantic meaning into a list of <strong>768 numbers</strong> (a unit vector on a 768-dimensional sphere).
+        </p>
+        <p>
+          Even when a developer searches using completely different words than the code author used (e.g., searching <em>"undo broken file changes"</em> when the method is named <code>BoundedHarnessState.rollback()</code>), their 768-number vectors point in almost the exact same angle!
+        </p>
+      </div>
+
+      <div class="tier-card tier-mechanics">
+        <span class="tier-tag tag-mechanics">Tier 2: Under the Hood — Cosine Distance &amp; HNSW Highway Graphs</span>
+        <h3>Searching Tens of Thousands of AST Nodes in Milliseconds</h3>
+        <p>
+          Because our vectors are L2-normalized (`normalize_embeddings=True`), <strong>Cosine Similarity</strong> is just the dot product of two vectors ($\cos(\theta) = \mathbf{A} \cdot \mathbf{B} \in [-1, 1]$), and `pgvector`'s <strong>Cosine Distance operator (<code>&lt;=&gt;</code>)</strong> is simply:
+        </p>
+        <pre>Cosine_Distance(A, B) = 1.0 - Cosine_Similarity(A, B)   (Range: 0.0 = identical to 2.0 = opposite)</pre>
+        <p>
+          To avoid scanning every row in PostgreSQL, we create an <strong>HNSW (Hierarchical Navigable Small World)</strong> index with <code>m = 16</code> (bi-directional links per node) and <code>ef_construction = 64</code> (candidate list depth during graph build). HNSW builds a multi-layer skip-graph: queries enter at the sparse top highway layer (Layer 2), make giant leaps toward the target region, and drop down to Layer 0 to pull the exact Top 40 semantic candidates.
+        </p>
+      </div>
+    </section>
+
+    <!-- MODULE 04 -->
+    <section class="module" id="m4">
+      <div class="module-kicker">Module 04 — Curing Alphanumeric Blindness</div>
+      <h2 class="module-title">Lexical Full-Text Search (GIN) &amp; Code Identifier Normalization</h2>
+
+      <div class="tier-card tier-beginner">
+        <span class="tier-tag tag-beginner">Tier 1: Beginner Intuition — The Book-Back Index for Exact Symbols</span>
+        <h3>Why Dense Vectors Fail on <code>getUserById</code> vs. <code>updateUserById</code></h3>
+        <p>
+          Dense embeddings blur exact characters together. If you ask for <code>settleInvoiceById</code>, a pure vector search might rank <code>getInvoiceById</code> higher because both deal with invoices.
+        </p>
+        <p>
+          PostgreSQL's <strong>GIN (Generalized Inverted Index)</strong> works like the index at the back of a textbook: it maps every word token directly to the exact `child_id` rows that contain it, assigning highest priority to matches in the function name (<strong>Weight A: 1.0</strong>), then signature (<strong>Weight B: 0.4</strong>), docstring (<strong>Weight C: 0.2</strong>), and body (<strong>Weight D: 0.1</strong>).
+        </p>
+      </div>
+
+      <div class="tier-card tier-math">
+        <span class="tier-tag tag-math">Tier 3: SQL Engineering — Fixing PostgreSQL's camelCase Blindspot</span>
+        <p>
+          By default, PostgreSQL's `'simple'` parser treats <code>settleInvoiceById</code> as one giant word: <code>settleinvoicebyid</code>. If someone searches <code>"settle invoice"</code>, it returns <strong>zero results</strong>! RepoBrain's immutable SQL function <code>normalize_code_identifiers()</code> emits both the exact symbol and its split sub-tokens:
+        </p>
+        <pre>CREATE OR REPLACE FUNCTION normalize_code_identifiers(input_text TEXT)
+RETURNS TEXT LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
+    SELECT lower(
+         coalesce(input_text, '') || ' ' ||
+        regexp_replace(
+            regexp_replace(
+                regexp_replace(coalesce(input_text, ''), '([A-Z]+)([A-Z][a-z])', '\1 \2', 'g'),
+                '([a-z0-9])([A-Z])', '\1 \2', 'g'
+            ),
+            '[_./:\-]+', ' ', 'g'
+        )
+    );
+$$;</pre>
+      </div>
+
+      <div class="sim-box">
+        <div class="sim-header">
+          <span>⚡ LIVE SIMULATOR: normalize_code_identifiers() + Disjunction tsquery</span>
+          <span>Type any function name, class, or route string to see how Postgres indexes &amp; queries it</span>
+        </div>
+        <div class="sim-controls">
+          <div class="sim-field">
+            <label for="lexInput">Code Identifier or Mixed Search Query:</label>
+            <input type="text" id="lexInput" value="settleInvoiceById in billing/ledger.py" oninput="runLexSim()" />
+          </div>
+        </div>
+        <div class="sim-output" id="lexOutput"></div>
+      </div>
+    </section>
+
+    <!-- MODULE 05 -->
+    <section class="module" id="m5">
+      <div class="module-kicker">Module 05 — Two-Stage Retrieval Funnel &amp; Ranking Math</div>
+      <h2 class="module-title">Reciprocal Rank Fusion (RRF, k=60) &amp; Cross-Encoder Reranking</h2>
+
+      <div class="tier-card tier-beginner">
+        <span class="tier-tag tag-beginner">Tier 1: Beginner Intuition — Combining Two Different Leaderboards</span>
+        <h3>How Do You Merge Cosine Distance (0.14) with Keyword Score (0.88)?</h3>
+        <p>
+          You cannot add raw vector distances and keyword scores together because their mathematical distributions are completely different. Instead, <strong>Reciprocal Rank Fusion (RRF)</strong> looks only at <em>where each item placed on its leaderboard</em> (Rank #1, Rank #2, Rank #3...):
+        </p>
+        <pre>RRF_Score(node) = 1 / (60 + rank_dense) + 1 / (60 + rank_sparse)</pre>
+        <p>
+          An AST node that ranks well in <strong>both</strong> semantic meaning AND exact keyword matching gets a massive boost over a noisy candidate that only scored well on one side!
+        </p>
+      </div>
+
+      <div class="sim-box">
+        <div class="sim-header">
+          <span>🧮 INTERACTIVE RRF (k=60) CALCULATOR (Gate 2 Benchmark Proof)</span>
+          <span>Test the exact Gate 2 ranks (Node A: #2 &amp; #1, Node B: #1 &amp; #7, Node C: #3 &amp; Miss)</span>
+        </div>
+        <div class="sim-controls">
+          <div class="sim-field">
+            <label>Node A (Dense Rank / Sparse Rank):</label>
+            <input type="text" id="nodeA" value="2, 1" oninput="runRrfSim()" />
+          </div>
+          <div class="sim-field">
+            <label>Node B (Dense Rank / Sparse Rank):</label>
+            <input type="text" id="nodeB" value="1, 7" oninput="runRrfSim()" />
+          </div>
+          <div class="sim-field">
+            <label>Node C (Dense Rank / 0 = Miss):</label>
+            <input type="text" id="nodeC" value="3, 0" oninput="runRrfSim()" />
+          </div>
+        </div>
+        <div class="sim-output" id="rrfSimOutput"></div>
+      </div>
+
+      <div class="tier-card tier-cto">
+        <span class="tier-tag tag-cto">Tier 4: CTO Guardrail #5 — Why SQL Must Return a 25-Item Pool for the Cross-Encoder</span>
+        <p>
+          A Bi-Encoder embeds the query and the code separately, so it cannot see fine-grained token interactions (like whether a variable is being <em>read</em> or <em>mutated</em>). However, running a <strong>Cross-Encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2`)</strong> on 50,000 rows in a database would take 30 seconds.
+        </p>
+        <p>
+          RepoBrain uses a <strong>Two-Stage Funnel</strong>: PostgreSQL narrows 50,000 nodes down to the <strong>Top 25 RRF candidates in 5 milliseconds</strong> (`LIMIT 25`). Then, the local CPU Cross-Encoder reads those 25 `(query, code)` pairs side-by-side in <strong>35 milliseconds</strong> and slices the final <code>top_k = 5</code>.
+        </p>
+      </div>
+    </section>
+
+    <!-- MODULE 06 -->
+    <section class="module" id="m6">
+      <div class="module-kicker">Module 06 — Self-Correcting Memory &amp; Token-Sparing Research</div>
+      <h2 class="module-title">Compounding Intelligence: Episodic Bug Memory &amp; Corrective Research RAG</h2>
+
+      <div class="tier-card tier-mechanics">
+        <span class="tier-tag tag-mechanics">1. Self-Correcting Episodic Memory (`project_episodes`)</span>
+        <h3>Growing Smarter Every Time a Test Fails and Heals</h3>
+        <p>
+          In our upgraded architecture, RepoBrain doesn't just index static code—it indexes <strong>engineering experience</strong>. Whenever `apply_git_patch` fails on Attempt 1 (e.g., a `Decimal` precision mismatch or an unawaited coroutine) and passes on Attempt 2 or 3, an errand worker model automatically distills the episode into PostgreSQL:
+        </p>
+        <ul>
+          <li><strong>`error_signature`:** The normalized exception and assertion delta from `filtered_traceback`.</li>
+          <li><strong>`root_cause_lesson`:** A concise 1-sentence engineering rule (e.g., <em>"Always quantize Decimal outputs to 0.01 with ROUND_HALF_UP before returning InvoiceResponse"</em>).</li>
+          <li><strong>`passing_diff`:** The exact unified diff that turned `exit_code = 1` into `exit_code = 0`.</li>
+        </ul>
+        <p>
+          The next time `search_codebase()` pulls a symbol with a matching error or domain vector, it attaches a compact `&lt;past_episodic_fix&gt;` tag. The more projects you build, the fewer retries your coding agent needs!
+        </p>
+      </div>
+
+      <div class="tier-card tier-cto">
+        <span class="tier-tag tag-cto">2. Token-Sparing Domain Research Agent (Corrective RAG / CRAG)</span>
+        <h3>How We Cut 90% of Documentation Research Tokens</h3>
+        <p>
+          Mindless agentic web browsing is the #1 hidden killer of API budgets. Our `research_technology(query, domain)` tool enforces a strict **Corrective RAG (CRAG)** pipeline:
+        </p>
+        <ol>
+          <li><strong>Local Knowledge Base First:</strong> Queries your local pre-indexed library of framework docs, RFCs, and past distilled markdown files (`.repobrain/kb/`).</li>
+          <li><strong>Deterministic Relevance Gate:</strong> A fast local/cheap model scores whether the retrieved local chunks answer the question ($\ge 0.75$). If yes, <strong>0 external search tokens</strong> are spent.</li>
+          <li><strong>Bounded 1-Hop Web Fallback + Extractive Compaction:</strong> If the topic is missing locally, it executes <strong>at most 1</strong> external search call, strips all HTML chrome/ads, uses the local Cross-Encoder to extract only the top 3 code-bearing passages (&lt;800 tokens), verifies grounding, and <strong>auto-saves the distilled `.md` note into your local KB</strong> for permanent zero-token reuse.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- MODULE 07 -->
+    <section class="module" id="m7">
+      <div class="module-kicker">Module 07 — Curated Open-Source Ground Base</div>
+      <h2 class="module-title">The GitHub Base-Build Stockroom &amp; Dual Agent/User Advisory Protocol</h2>
+
+      <div class="tier-card tier-beginner">
+        <span class="tier-tag tag-beginner">How Our Stockroom Guides Both the Coding Agent and You</span>
+        <p>
+          Coding agents write much stronger software when they adapt battle-tested reference architectures rather than inventing boilerplate from scratch. RepoBrain indexes a curated stockroom of reference GitHub repositories (`~/.repobrain/templates/`). When you ask to build a feature, RepoBrain's `search_templates()` tool performs a <strong>Dual Advisory</strong>:
+        </p>
+        <ul>
+          <li><strong>Instructs the Coding Agent:</strong> Injects the exact reference AST pattern and invariants into the prompt so the agent follows production conventions.</li>
+          <li><strong>Informs You (The Lead Engineer):</strong> Prints a clear pointer telling you which exact repo, file path, and line numbers to inspect so you learn the architecture alongside the agent.</li>
+        </ul>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Target Sub-System / Stack</th>
+              <th>GitHub Reference Repository</th>
+              <th>Exact Files &amp; Patterns Stocked for Agent &amp; User Inspection</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Sub-System 1: AST Walker</strong></td>
+              <td><code>Consiliency/treesitter-chunker</code></td>
+              <td>Precompiled language bindings, AST node walkers, and UTF-8 byte-offset slicing for <code>ast_chunker.py</code>.</td>
+            </tr>
+            <tr>
+              <td><strong>Sub-System 1 &amp; 3: Queries &amp; Diffs</strong></td>
+              <td><code>Aider-AI/aider</code></td>
+              <td>Inspect <code>aider/queries/*.scm</code> for Python/TS symbol capture and <code>aider/coders/udiff_coder.py</code> for resilient unified diff handling.</td>
+            </tr>
+            <tr>
+              <td><strong>Sub-System 2: Hybrid RRF SQL</strong></td>
+              <td><code>pavangupta352/pghybrid</code></td>
+              <td>Inspect <code>sql/hybrid_search.sql</code> for single-query PostgreSQL <code>pgvector</code> + <code>tsvector</code> fused via <code>FULL OUTER JOIN</code> RRF.</td>
+            </tr>
+            <tr>
+              <td><strong>Sub-System 2: Vector &amp; Rerank</strong></td>
+              <td><code>pgvector/pgvector-python</code></td>
+              <td>Inspect <code>examples/hybrid_search/</code> for <code>register_vector(conn)</code> on <code>psycopg</code> v3, HNSW tuning, and Cross-Encoder reranking.</td>
+            </tr>
+            <tr>
+              <td><strong>Sub-System 3: MCP Transport</strong></td>
+              <td><code>modelcontextprotocol/python-sdk</code> &amp; <code>jlowin/fastmcp</code></td>
+              <td>Official <code>@mcp.tool()</code> decorators, Pydantic v2 schema serialization, <code>stdio</code> JSON-RPC server loop, and <code>mcp dev</code> inspector.</td>
+            </tr>
+            <tr>
+              <td><strong>Sub-System 3: Sandbox Runner</strong></td>
+              <td><code>SWE-agent/SWE-ReX</code></td>
+              <td>Inspect <code>src/swerex/deployment/docker.py</code> &amp; <code>local.py</code> for timeout-safe subprocess and read-only Docker container execution.</td>
+            </tr>
+            <tr>
+              <td><strong>Agent Tool Ergonomics</strong></td>
+              <td><code>oraios/serena</code></td>
+              <td>Inspect symbol-level MCP tool docstrings and <code>uv</code> launch patterns for Claude Code, Codex, and Antigravity IDE.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MODULE 08 -->
+    <section class="module" id="m8">
+      <div class="module-kicker">Module 08 — Subscriptions, Open-Source Models &amp; Token Delegation</div>
+      <h2 class="module-title">Using Claude Code, Codex &amp; Open-Source Models as a Tiered Team</h2>
+
+      <div class="tier-card tier-cto">
+        <span class="tier-tag tag-cto">100% Compatibility Across Subscriptions &amp; Local Open-Source Models</span>
+        <p>
+          Because RepoBrain speaks the universal <strong>Model Context Protocol (MCP) over `stdio` JSON-RPC</strong>, your memory database and execution harness are completely decoupled from any single AI vendor:
+        </p>
+        <div class="grid-3">
+          <div class="sub-card">
+            <h4>1. Claude Code &amp; Antigravity IDE</h4>
+            <p>Connects natively via <code>mcp_config.json</code> or <code>claude mcp add</code>. Your subscription quota lasts 4x–5x longer because RepoBrain sends 400-token AST slices instead of 8,000-token raw files.</p>
+          </div>
+          <div class="sub-card">
+            <h4>2. OpenAI Codex / Cursor / Windsurf</h4>
+            <p>Connects directly via MCP tool discovery or OpenAI Function Calling bridges, enforcing the exact same 3-retry sandbox verification loop.</p>
+          </div>
+          <div class="sub-card">
+            <h4>3. Open-Source Models (Ollama / vLLM)</h4>
+            <p>Run <code>Qwen-2.5-Coder-32B</code> or <code>DeepSeek-Coder</code> locally for $0.00 errand tasks (AST folding, episodic summarization, doc compaction) or full offline coding!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE 09 -->
+    <section class="module" id="m9">
+      <div class="module-kicker">Module 09 — Protocol Hygiene &amp; Non-Destructive Self-Healing</div>
+      <h2 class="module-title">FastMCP stdio JSON-RPC Internals &amp; The 3-Retry Surgical Rollback</h2>
+
+      <div class="tier-card tier-mechanics">
+        <span class="tier-tag tag-mechanics">1. Why `sys.stdout` Must Be 100% Pure JSON-RPC (Guardrail #8)</span>
+        <p>
+          FastMCP communicates with your IDE over OS pipes (`sys.stdin` for requests, `sys.stdout` for responses). If any library prints a non-JSON string—such as a HuggingFace download bar (`Downloading: 100%`) or a `print("debug")` statement—to `stdout`, the IDE's JSON-RPC parser immediately crashes. RepoBrain locks `TOKENIZERS_PARALLELISM="false"`, `HF_HUB_DISABLE_PROGRESS_BARS="1"`, and routes all Python `logging` strictly to `sys.stderr`.
+        </p>
+      </div>
+
+      <div class="tier-card tier-cto">
+        <span class="tier-tag tag-cto">2. Why `git reset --hard` Is Forbidden &amp; How Surgical Byte Snapshots Work (Guardrail #7)</span>
+        <p>
+          If you have uncommitted notes in <code>src/uncommitted_notes.py</code> while the agent is fixing <code>src/billing/ledger.py</code>, running <code>git reset --hard</code> on Retry #3 failure would permanently wipe out your uncommitted notes!
+        </p>
+        <p>
+          Instead, RepoBrain's <code>BoundedHarnessState</code> tracks a per-task <code>TaskCheckpoint</code> keyed by <code>task_id</code>:
+        </p>
+        <ol>
+          <li>Validates diff syntax with <code>git apply --check --whitespace=nowarn -</code> (if this fails, <code>patch_applied=False</code> and <code>iteration</code> is <strong>not</strong> incremented).</li>
+          <li>Snapshots the raw bytes of <em>only</em> the target files listed in <code>+++ b/&lt;path&gt;</code> into memory (or records <code>None</code> if the file is newly created by the patch).</li>
+          <li>Applies the patch and immediately calls <code>retriever.sync_file_if_changed()</code> so PostgreSQL has the new AST line numbers before Retry #2.</li>
+          <li>Runs <code>pytest</code> or <code>vitest</code> inside our network-disabled, read-only container (<code>--network=none --read-only --tmpfs /tmp:rw,exec,nosuid</code>) and strips <code>site-packages/</code> and <code>node_modules/</code> frames.</li>
+          <li>If Attempt #3 fails, restores the exact pre-task bytes of the touched files, re-syncs PostgreSQL, and leaves <code>src/uncommitted_notes.py</code> 100% intact.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- MODULE 10 -->
+    <section class="module" id="m10">
+      <div class="module-kicker">Module 10 — Practical Setup &amp; Implementation Runbook</div>
+      <h2 class="module-title">Step-by-Step Guide to Building, Testing &amp; Running RepoBrain Locally</h2>
+
+      <div class="tier-card tier-mechanics">
+        <span class="tier-tag tag-mechanics">Phase A: Local Repository Bootstrap (`uv` + PostgreSQL 16 `pgvector`)</span>
+        <pre># 1. Create the target repository structure
+mkdir -p repobrain/src/repobrain repobrain/sql repobrain/tests/fixtures
+cd repobrain
+
+# 2. Initialize Python 3.11+ environment with uv (matches our pyproject.toml)
+uv init --lib
+uv add "mcp[cli]>=1.2.0" "psycopg[binary]>=3.2.0" "pgvector>=0.3.2" \
+       "pydantic>=2.7.0" "tree-sitter>=0.23.0" "tree-sitter-python>=0.23.0" \
+       "tree-sitter-typescript>=0.23.0" "sentence-transformers>=3.0.0" "torch>=2.3.0"
+uv add --dev "pytest>=8.2.0" "pytest-asyncio>=0.23.7" "ruff>=0.5.0"
+
+# 3. Start PostgreSQL 16 with pgvector and apply the Hybrid RRF schema
+docker run -d --name repobrain-pg -p 5432:5432 \
+  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=repobrain \
+  pgvector/pgvector:pg16
+
+psql "postgresql://postgres:postgres@localhost:5432/repobrain" -f sql/02_DATABASE_SCHEMA_AND_RRF.sql</pre>
+      </div>
+
+      <div class="tier-card tier-math">
+        <span class="tier-tag tag-math">Phase B: The 3-Stage Engineering Workflow &amp; Vertical Slice TDD</span>
+        <table>
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Environment</th>
+              <th>Actionable Build Steps &amp; Verification Gate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Stage 1</strong></td>
+              <td><strong>Gemini Notebook</strong></td>
+              <td>Keep the 7 modular source files, AST node mappings, and 15 Golden Queries (5 exact symbol, 5 semantic, 5 hybrid) frozen as your single architectural source of truth.</td>
+            </tr>
+            <tr>
+              <td><strong>Stage 2</strong></td>
+              <td><strong>Google AI Studio</strong> (<code>Gemini 4 Argon</code>, $T=0.0$)</td>
+              <td>Run the 4-Gate Master Prompt at Temperature $0.0$ to deterministically validate UTF-8 byte offsets, RRF math (`0.032279` vs `0.030282`), 2-attempt Decimal self-healing, and Retry #3 surgical rollback.</td>
+            </tr>
+            <tr>
+              <td><strong>Stage 3</strong></td>
+              <td><strong>Antigravity IDE / Claude Code</strong></td>
+              <td>Execute Vertical Slice TDD: <code>uv run pytest -m slice1</code> (AST Chunker) $\to$ <code>uv run pytest -m slice2</code> (Postgres RRF + Cross-Encoder) $\to$ <code>uv run pytest -m slice3</code> (Bounded FastMCP Harness), then mount RepoBrain to dogfood itself!</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tier-card tier-cto">
+        <span class="tier-tag tag-cto">Phase C: Mounting RepoBrain in Antigravity IDE &amp; Claude Code (`mcp_config.json`)</span>
+        <pre>{
+  "mcpServers": {
+    "repobrain": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/repobrain",
+        "run",
+        "fastmcp",
+        "run",
+        "src/repobrain/server.py"
+      ],
+      "env": {
+        "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/repobrain",
+        "SANDBOX_MODE": "subprocess",
+        "TOKENIZERS_PARALLELISM": "false",
+        "HF_HUB_DISABLE_PROGRESS_BARS": "1"
+      }
+    }
+  }
+}</pre>
+      </div>
+    </section>
+
+    <!-- MODULE 11 -->
+    <section class="module" id="m11">
+      <div class="module-kicker">Module 11 — Principal AI Systems Engineer Self-Test</div>
+      <h2 class="module-title">8-Question CTO Architecture &amp; Interview Defense Check</h2>
+
+      <div class="quiz-item">
+        <h3>1. Why must `ast_chunker.py` slice `source_bytes[node.start_byte:node.end_byte].decode("utf-8")` instead of slicing the decoded Python string?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          Tree-sitter reports offsets in raw UTF-8 bytes. Characters like <code>€</code>, <code>→</code>, and <code>≤</code> take 3 bytes (and emojis take 4 bytes) while counting as only 1 Python character. Slicing a Python string with byte indices shifts every subsequent function boundary and truncates code.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <h3>2. Why do we unwrap `decorated_definition` and index zero-method classes as `node_kind="type_definition"`?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          Unwrapping <code>decorated_definition</code> preserves route URLs and tool decorators (like <code>@router.post()</code> or <code>@mcp.tool()</code>) inside the Child Node. Indexing zero-method classes/interfaces as <code>type_definition</code> ensures Pydantic <code>BaseModel</code> and TypeScript <code>interface</code> contracts are searchable.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <h3>3. How does `normalize_code_identifiers()` cure Alphanumeric Blindness in PostgreSQL Full-Text Search?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          PostgreSQL's default <code>'simple'</code> dictionary turns <code>settleInvoiceById</code> into a single token <code>settleinvoicebyid</code>, which fails on partial searches like <code>"settle invoice"</code>. Our regex normalizer emits both the exact identifier and its split sub-tokens (<code>settleinvoicebyid settle invoice by id</code>).
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <h3>4. Why does our lexical query join tokens with disjunction (`|`) and rank with `ts_rank_cd(..., 32)`?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          Strict boolean <code>AND</code> (<code>&amp;</code>) collapses to 0 rows whenever a natural-language query includes conversational words (like <code>"in"</code> or <code>"bug"</code>) not present in the function tokens. Disjunction (<code>|</code>) retrieves candidates matching any token, while flag <code>32</code> normalizes rank via <code>rank / (rank + 1)</code> into <code>[0.0, 1.0)</code>.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <h3>5. Why do we fuse rankings with RRF ($k=60$) into `LIMIT 25` before running the Cross-Encoder?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          Cosine distance ($\in [0, 2]$) and lexical <code>ts_rank_cd</code> operate on incompatible scales, so RRF merges their rank positions without calibration drift. Fetching a 25-item RRF pool gives the Cross-Encoder (<code>ms-marco-MiniLM-L-6-v2</code>) enough recall to perform full cross-attention scoring before slicing the final <code>top_k = 5</code>.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <h3>6. Why does `apply_git_patch` call `sync_file_if_changed()` immediately after applying a patch and after rolling back?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          If Attempt #1 adds 4 lines to a file and fails the test suite, the AST line numbers on disk have shifted. Recomputing the Git blob SHA (<code>sha1("blob " + len + "\0" + bytes)</code>) and upserting the modified file in PostgreSQL guarantees Attempt #2 never reads stale line numbers.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <h3>7. Why is `git reset --hard` forbidden in `BoundedHarnessState.rollback()`?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          <code>git reset --hard</code> wipes out all uncommitted developer changes across the entire repository and leaves untracked patch files behind. Per-task byte snapshots in <code>TaskCheckpoint</code> restore or unlink only the specific files touched by that task.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <h3>8. How do the Chief Lead Tier and Errand Worker Tier work together to minimize token spend?</h3>
+        <button class="quiz-btn" onclick="toggleAnswer(this)">Reveal CTO Answer</button>
+        <div class="quiz-reveal">
+          Local CPU models handle embeddings and Cross-Encoder reranking at $0 cost, while cheap/local worker LLMs fold >150-line AST chunks, distill Fail-to-Pass test transitions into <code>project_episodes</code>, and compact web docs into cached markdown—leaving the frontier model (Claude Code / Codex / Antigravity) to process only tiny, high-signal context blocks.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function setDepth(mode, btn) {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cards = document.querySelectorAll('.tier-card');
+      cards.forEach(c => {
+        if (mode === 'all') {
+          c.style.display = 'block';
+        } else if (mode === 'beginner') {
+          c.style.display = (c.classList.contains('tier-beginner') || c.classList.contains('tier-mechanics')) ? 'block' : 'none';
+        } else if (mode === 'cto') {
+          c.style.display = (c.classList.contains('tier-math') || c.classList.contains('tier-cto')) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function filterSidebar() {
+      const q = document.getElementById('navSearch').value.toLowerCase();
+      document.querySelectorAll('#navLinks li').forEach(li => {
+        li.style.display = li.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    function runUtfSim() {
+      const str = document.getElementById('utfInput').value || '';
+      const charLen = Array.from(str).length;
+      const utf8Bytes = new TextEncoder().encode(str).length;
+      const drift = utf8Bytes - charLen;
+      document.getElementById('utfOutput').innerHTML =
+        `<div><strong>Character Count:</strong> ${charLen} chars &nbsp;|&nbsp; <strong>UTF-8 Byte Length:</strong> ${utf8Bytes} bytes</div>` +
+        `<div style="margin-top:5px; color:${drift > 0 ? '#fbbf24' : '#34d399'};">` +
+        (drift > 0
+          ? `⚠️ Byte Offset Drift Detected: +${drift} extra bytes! Naive string slicing would shift and corrupt every AST node after this line by ${drift} characters.`
+          : `✅ Pure ASCII (0 byte drift).`) +
+        `</div>`;
+    }
+
+    function runLexSim() {
+      const raw = document.getElementById('lexInput').value || '';
+      const split = raw
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/[_./:\-]+/g, ' ')
+        .toLowerCase()
+        .trim();
+      const combined = (raw.toLowerCase() + ' ' + split).split(/\s+/).filter(Boolean);
+      const uniqueTokens = Array.from(new Set(combined));
+      document.getElementById('lexOutput').innerHTML =
+        `<div><strong>Stored tsvector Tokens:</strong> '${uniqueTokens.join("', '")}'</div>` +
+        `<div style="margin-top:5px; color:#38bdf8;"><strong>Disjunction tsquery:</strong> ${uniqueTokens.join(' | ')}</div>`;
+    }
+
+    function parseRanks(val) {
+      const parts = (val || '').split(',').map(s => parseInt(s.trim(), 10) || 0);
+      return [parts[0] || 0, parts[1] || 0];
+    }
+    function rrfMath(d, s) {
+      return (d > 0 ? 1 / (60 + d) : 0) + (s > 0 ? 1 / (60 + s) : 0);
+    }
+    function runRrfSim() {
+      const [ad, as] = parseRanks(document.getElementById('nodeA').value);
+      const [bd, bs] = parseRanks(document.getElementById('nodeB').value);
+      const [cd, cs] = parseRanks(document.getElementById('nodeC').value);
+
+      const sa = rrfMath(ad, as);
+      const sb = rrfMath(bd, bs);
+      const sc = rrfMath(cd, cs);
+
+      document.getElementById('rrfSimOutput').innerHTML =
+        `<div><strong>Node A (Dense #${ad}, Sparse #${as}):</strong> ${sa.toFixed(6)}</div>` +
+        `<div><strong>Node B (Dense #${bd}, Sparse #${bs}):</strong> ${sb.toFixed(6)}</div>` +
+        `<div><strong>Node C (Dense #${cd}, Sparse #${cs}):</strong> ${sc.toFixed(6)}</div>` +
+        `<div style="margin-top:6px; color:#fbbf24;">🏆 Ranking Order: ` +
+        [
+          { name: 'Node A', score: sa },
+          { name: 'Node B', score: sb },
+          { name: 'Node C', score: sc }
+        ].sort((x, y) => y.score - x.score).map(i => `${i.name} (${i.score.toFixed(6)})`).join(' → ') +
+        `</div>`;
+    }
+
+    function toggleAnswer(btn) {
+      const box = btn.nextElementSibling;
+      const shown = box.style.display === 'block';
+      box.style.display = shown ? 'none' : 'block';
+      btn.textContent = shown ? 'Reveal CTO Answer' : 'Hide CTO Answer';
+    }
+
+    runUtfSim();
+    runLexSim();
+    runRrfSim();
+  </script>
+</body>
+</html>

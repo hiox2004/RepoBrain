@@ -6,3 +6,17 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# SQLite & local databases
+*.db
+*.db-journal
+
+# Test scratch dirs
+test_scratch_*

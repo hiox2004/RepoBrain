@@ -1,0 +1,42 @@
+# .repobrain/policy.toml
+# Sanctuary Policy Guard Configuration (Guardrail #8)
+# Protected file patterns and security boundaries for RepoBrain FastMCP Server
+
+[sanctuary]
+version = "2.0"
+enforce_strict_boundaries = true
+
+# Protected patterns: apply_git_patch will strictly reject mutations matching these globs
+protected_patterns = [
+    "*.lock",
+    "bun.lock",
+    "bun.lockb",
+    "poetry.lock",
+    "package-lock.json",
+    "yarn.lock",
+    "uv.lock",
+    "pnpm-lock.yaml",
+    "alembic/versions/*",
+    "pyproject.toml",
+    ".env",
+    ".env.*",
+    ".repobrain/policy.toml",
+    ".git/*",
+    ".github/workflows/*"
+]
+
+# Guardrail: reject test assertions modification on attempt 0
+protect_test_assertions_at_iteration_zero = true
+
+[sandbox]
+max_iterations = 3
+timeout_seconds = 30
+enforce_read_only_tmpfs = true
+strip_third_party_frames = true
+ignored_frame_patterns = [
+    "site-packages/",
+    "node_modules/",
+    "/usr/lib/python",
+    "<frozen importlib"
+]
+

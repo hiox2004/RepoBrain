@@ -1,7 +1,10 @@
 # src/repobrain/ast_chunker.py
 """
-Hierarchical Tree-Sitter Parent-Child AST Code Chunker
-Strictly enforces Guardrail #1 (UTF-8 byte offset slicing) and Guardrail #2 (decorator preservation and methodless type definitions).
+Hierarchical Tree-Sitter & Byte-Safe Parent-Child AST Code Chunker
+Strictly enforces:
+- Guardrail #1: UTF-8 byte-offset slicing (zero character drift on multi-byte characters).
+- Guardrail #2: Outer decorator preservation and methodless type definitions.
+- Git blob SHA computation: sha1("blob " + len(source_bytes) + "\\0" + source_bytes).
 """
 
 from __future__ import annotations
@@ -10,7 +13,7 @@ import hashlib
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 from uuid import uuid4
 
 from repobrain.schemas import ASTChildNode, ASTParentNode
@@ -40,8 +43,8 @@ class ASTCodeChunker:
 
     def _init_tree_sitter(self) -> None:
         try:
-            import tree_sitter_languages # type: ignore
-            from tree_sitter import Language, Parser # type: ignore
+            import tree_sitter_languages  # type: ignore
+            from tree_sitter import Language, Parser  # type: ignore
             self.ts_parser_py = tree_sitter_languages.get_parser("python")
             self.ts_parser_ts = tree_sitter_languages.get_parser("typescript")
             self.tree_sitter_available = True
@@ -55,10 +58,9 @@ class ASTCodeChunker:
         """
         file_path = file_path.resolve()
         if repo_root is None:
-            # Locate repo root by walking up
             curr = file_path.parent
             while curr != curr.parent:
-                if (curr / ".git").exists() or (curr / "package.json").exists():
+                if (curr / ".git").exists() or (curr / "package.json").exists() or (curr / "pyproject.toml").exists():
                     repo_root = curr
                     break
                 curr = curr.parent
@@ -77,18 +79,25 @@ class ASTCodeChunker:
         ext = file_path.suffix.lower()
 
         if ext == ".py":
-            language = "python"
             return self._chunk_python(source_bytes, rel_path, git_sha)
         elif ext in (".ts", ".tsx", ".js", ".jsx"):
-            language = "typescript"
             return self._chunk_typescript(source_bytes, rel_path, git_sha)
         else:
-            raise ValueError(f"Unsupported file extension: {ext}")
+            raise ValueError(f"Unsupported file extension for AST parsing: {ext}")
 
-    def _get_line_number(self, byte_offset: int, line_starts: List[int]) -> int:
-        """Binary search for 1-based line number given UTF-8 byte offset."""
-        import bisect
-        return bisect.bisect_right(line_starts, byte_offset)
+    def chunk_code_string(
+        self,
+        code_str: str,
+        virtual_path: str = "snippet.py",
+        language: str = "python"
+    ) -> Tuple[ASTParentNode, List[ASTChildNode]]:
+        """Utility for in-memory AST chunking of raw code strings (e.g. in test suites)."""
+        source_bytes = code_str.encode("utf-8")
+        git_sha = compute_git_blob_sha(source_bytes)
+        if language == "python" or virtual_path.endswith(".py"):
+            return self._chunk_python(source_bytes, virtual_path, git_sha)
+        else:
+            return self._chunk_typescript(source_bytes, virtual_path, git_sha)
 
     def _compute_line_byte_offsets(self, source_bytes: bytes) -> List[int]:
         """Returns list of byte offsets where each line begins (0-indexed)."""
@@ -108,14 +117,12 @@ class ASTCodeChunker:
         line_offsets = self._compute_line_byte_offsets(source_bytes)
         source_text = source_bytes.decode("utf-8")
 
-        # Parse AST to find import statements and structural nodes
         py_ast = ast.parse(source_text, filename=file_path)
 
         # Extract top-level imports header
         import_lines: List[str] = []
         for stmt in py_ast.body:
             if isinstance(stmt, (ast.Import, ast.ImportFrom)):
-                # Calculate byte offsets for the import statement
                 stmt_lines = source_text.splitlines(keepends=True)[stmt.lineno - 1 : stmt.end_lineno]
                 import_lines.append("".join(stmt_lines).strip())
         imports_header = "\n".join(import_lines)
@@ -131,28 +138,17 @@ class ASTCodeChunker:
 
         children: List[ASTChildNode] = []
 
-        # Find byte offsets for AST nodes accurately
-        # Helper to convert line/col to byte offset
-        def to_byte_offset(lineno: int, col_offset: int) -> int:
-            line_start_byte = line_offsets[lineno - 1]
-            line_bytes = source_bytes[line_start_byte:]
-            # col_offset in python 3.8+ ast is UTF-8 byte offset within line
-            return line_start_byte + col_offset
-
         for stmt in py_ast.body:
             if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                # Guardrail #2: outer decorator preservation
                 child = self._extract_py_function(stmt, source_bytes, line_offsets, parent_node.parent_id, file_path, "callable")
                 children.append(child)
             elif isinstance(stmt, ast.ClassDef):
-                # Check method count inside class
                 methods = [m for m in stmt.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]
                 if len(methods) == 0:
                     # Guardrail #2: Methodless classes (e.g. Pydantic BaseModel) -> type_definition
                     child = self._extract_py_class_as_typedef(stmt, source_bytes, line_offsets, parent_node.parent_id, file_path)
                     children.append(child)
                 else:
-                    # Index class methods as child nodes with enclosing class scope
                     for method in methods:
                         child = self._extract_py_function(
                             method,
@@ -181,26 +177,17 @@ class ASTCodeChunker:
         if fn_node.decorator_list:
             first_dec = fn_node.decorator_list[0]
             start_lineno = first_dec.lineno
-            start_col = first_dec.col_offset
         else:
             start_lineno = fn_node.lineno
-            start_col = fn_node.col_offset
 
-        # Find actual start line offset (include indentation or decorators)
         start_line_byte = line_offsets[start_lineno - 1]
-        
-        # End byte
         end_lineno = fn_node.end_lineno or fn_node.lineno
         if end_lineno < len(line_offsets):
             end_line_byte = line_offsets[end_lineno]
         else:
             end_line_byte = len(source_bytes)
 
-        # Slice code block using Guardrail #1 (UTF-8 byte offsets)
-        body_slice_bytes = source_bytes[start_line_byte:end_line_byte]
-        body_code = body_slice_bytes.decode("utf-8").rstrip("\n")
-
-        # Extract docstring
+        body_code = self._slice_bytes(source_bytes, start_line_byte, end_line_byte).rstrip("\n")
         docstring = ast.get_docstring(fn_node)
 
         # Construct full signature (including decorators)
@@ -209,7 +196,6 @@ class ASTCodeChunker:
             dec_line = source_bytes[line_offsets[dec.lineno - 1] : line_offsets[dec.end_lineno or dec.lineno]].decode("utf-8").strip()
             sig_lines.append(dec_line)
 
-        # Function header line up to ':'
         def_line = source_bytes[line_offsets[fn_node.lineno - 1] : line_offsets[fn_node.lineno]].decode("utf-8").strip()
         sig_lines.append(def_line)
         signature = "\n".join(sig_lines)
@@ -218,7 +204,7 @@ class ASTCodeChunker:
             child_id=uuid4(),
             parent_id=parent_id,
             file_path=file_path,
-            node_kind=node_kind, # type: ignore
+            node_kind=node_kind,  # type: ignore
             symbol_name=f"{enclosing_class}.{fn_node.name}" if enclosing_class else fn_node.name,
             signature=signature,
             docstring=docstring,
@@ -237,7 +223,7 @@ class ASTCodeChunker:
     ) -> ASTChildNode:
         start_lineno = cls_node.lineno
         start_line_byte = line_offsets[start_lineno - 1]
-        
+
         end_lineno = cls_node.end_lineno or cls_node.lineno
         if end_lineno < len(line_offsets):
             end_line_byte = line_offsets[end_lineno]
@@ -246,8 +232,6 @@ class ASTCodeChunker:
 
         body_code = self._slice_bytes(source_bytes, start_line_byte, end_line_byte).rstrip("\n")
         docstring = ast.get_docstring(cls_node)
-
-        # Signature: class ClassName(Base1, Base2):
         sig_line = source_bytes[line_offsets[start_lineno - 1] : line_offsets[start_lineno]].decode("utf-8").strip()
 
         return ASTChildNode(
@@ -264,15 +248,14 @@ class ASTCodeChunker:
         )
 
     def _chunk_typescript(self, source_bytes: bytes, file_path: str, git_blob_sha: str) -> Tuple[ASTParentNode, List[ASTChildNode]]:
-        """TypeScript AST parser adhering to Guardrails #1 and #2."""
         line_offsets = self._compute_line_byte_offsets(source_bytes)
         source_text = source_bytes.decode("utf-8")
 
-        # Collect import statements
         import_lines = []
         for line in source_text.splitlines():
-            if line.strip().startswith("import ") or line.strip().startswith("export * from") or line.strip().startswith("export {"):
-                import_lines.append(line.strip())
+            line_s = line.strip()
+            if line_s.startswith("import ") or line_s.startswith("export * from") or line_s.startswith("export {"):
+                import_lines.append(line_s)
         imports_header = "\n".join(import_lines)
 
         parent_node = ASTParentNode(
@@ -285,20 +268,18 @@ class ASTCodeChunker:
         )
 
         children: List[ASTChildNode] = []
-        # Regex-based TypeScript scanner with byte boundary tracking
-        # Matches interface, type, functions, exported items
         lines = source_text.splitlines(keepends=True)
         i = 0
         while i < len(lines):
             line = lines[i]
-            # Interface or type definition (methodless)
-            if re.match(r"^\s*(export\s+)?(interface|type)\s+([A-Za-z0-9_]+)", line):
-                match = re.match(r"^\s*(export\s+)?(interface|type)\s+([A-Za-z0-9_]+)", line)
-                symbol_name = match.group(3) # type: ignore
+
+            # Interface or type definition (methodless schema)
+            type_match = re.match(r"^\s*(export\s+)?(interface|type)\s+([A-Za-z0-9_]+)", line)
+            if type_match:
+                symbol_name = type_match.group(3)
                 start_line = i + 1
                 start_byte = line_offsets[i]
-                
-                # Scan until closing brace or semicolon
+
                 depth = 0
                 end_line = start_line
                 for j in range(i, len(lines)):
@@ -308,7 +289,7 @@ class ASTCodeChunker:
                         break
                 end_byte = line_offsets[end_line] if end_line < len(line_offsets) else len(source_bytes)
                 body = self._slice_bytes(source_bytes, start_byte, end_byte).rstrip("\n")
-                
+
                 children.append(
                     ASTChildNode(
                         child_id=uuid4(),
@@ -327,10 +308,10 @@ class ASTCodeChunker:
                 continue
 
             # Exported function or const arrow function
-            fn_match = re.match(r"^\s*(export\s+)?(async\s+)?function\s+([A-Za-z0-9_]+)", line) or \
-                       re.match(r"^\s*(export\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*(async\s+)?\([^)]*\)\s*=>", line)
-            if fn_match:
-                symbol_name = fn_match.group(3) if fn_match.lastindex and fn_match.lastindex >= 3 and fn_match.group(3) else (fn_match.group(2) if fn_match.group(2) else "fn")
+            fn_match = re.match(r"^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z0-9_]+)", line)
+            arrow_match = re.match(r"^\s*(?:export\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s+)?\(.*?\)\s*(?::\s*.*?)?\s*=>", line)
+            if fn_match or arrow_match:
+                symbol_name = fn_match.group(1) if fn_match else arrow_match.group(1) # type: ignore
                 start_line = i + 1
                 start_byte = line_offsets[i]
                 depth = 0
