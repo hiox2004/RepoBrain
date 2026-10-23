@@ -7,3 +7,4 @@ When working with RepoBrain tools in Antigravity, Claude Code, or Codex, enforce
 3. `<diagnostic_hypothesis>`: Identify minimal changes needed (< 40 words).
 4. `<surgical_patch>`: Apply unified diff via `apply_git_patch`.
 5. `<verification_verdict>`: Verify static checks and test results.
+

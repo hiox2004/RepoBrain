@@ -9,6 +9,7 @@ Welcome to the **RepoBrain** documentation library. This folder is organized hie
 ```
 docs/
 ├── README.md                          <-- (You are here) Master Portal & Reading Paths
+├── 08_COMPARATIVE_ANALYSIS_WITH_AND_WITHOUT_REPOBRAIN.md <-- Full With vs. Without Evaluation
 ├── 07_AGENT_INTEGRATION_AND_EVALUATION_REPORT.md <-- Agent Setup & Dogfooding Evaluation
 ├── 06_SETUP_AND_USER_MANUAL.md        <-- Setup & User Manual: Antigravity, Claude Code, Tools
 ├── 01_LAYMAN_EXPLANATION.md           <-- Plain English: E2E project guide & analogies
@@ -16,7 +17,8 @@ docs/
 ├── 03_SYSTEM_STATUS_AND_AUDIT.md      <-- Technical Audit: Where we are now & CTO Q&A
 ├── 05_MULTI_AGENT_SYSTEM_OF_WORKING.md <-- Multi-Agent Loop: Roles, States & LangGraph CRAG
 └── interactive/
-    ├── 04_REPOBRAIN_COMPLETE_CTO_MASTERGUIDE.html  <-- Living Interactive Masterclass (15 Modules)
+    ├── 05_REPOBRAIN_VS_BASELINE_COMPARISON.html    <-- Interactive Side-by-Side Webapp
+    ├── 04_REPOBRAIN_COMPLETE_CTO_MASTERGUIDE.html  <-- Living Interactive Masterclass (16 Modules)
     └── HOW_TO_OPEN_STUDY_GUIDE.md    <-- Instructions to open the HTML in your browser
 ```
 
@@ -52,6 +54,17 @@ docs/
 2. Read **[`03_SYSTEM_STATUS_AND_AUDIT.md`](03_SYSTEM_STATUS_AND_AUDIT.md)**:
    - Review the line-by-line implementation status of every module.
    - Read the self-answered CTO interview addressing database topologies, latency, and sandbox security.
+
+### Path E: "Show Me the Side-by-Side Proof: With vs. Without RepoBrain" (5 minutes)
+1. Read **[`08_COMPARATIVE_ANALYSIS_WITH_AND_WITHOUT_REPOBRAIN.md`](08_COMPARATIVE_ANALYSIS_WITH_AND_WITHOUT_REPOBRAIN.md)**:
+   - Review the empirical proof of value matrix across 5 workloads.
+   - Inspect context reduction from 8,009 to 3,935 tokens (50.9%) and 2,959 to 412 tokens (86.1%).
+   - See how blast radius traversal catches 4 transitive callers in 2.7 ms.
+2. Launch the interactive side-by-side webapp:
+   ```powershell
+   Start-Process "docs/interactive/05_REPOBRAIN_VS_BASELINE_COMPARISON.html"
+   ```
+   Or visit the `RepoBrain vs Baseline` tab in the React workbench (`npm run dev`).
 
 ---
 

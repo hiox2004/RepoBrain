@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Shield, Terminal, CheckCircle2, Zap, BookOpen } from 'lucide-react';
+import { Cpu, Shield, Terminal, CheckCircle2, Zap, BookOpen, Scale } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
@@ -15,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   allGatesPassed,
 }) => {
   const tabs = [
+    { id: 'comparison', label: 'RepoBrain vs Baseline', icon: Scale },
     { id: 'gates', label: '4-Gate Verification', icon: CheckCircle2 },
     { id: 'docs', label: 'Masterguide & Docs', icon: BookOpen },
     { id: 'architecture', label: '3-Layer Architecture', icon: Shield },
