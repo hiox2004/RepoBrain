@@ -282,6 +282,7 @@ def _run_test_runner(test_path: str, repo_root: Optional[Path] = None) -> Dict[s
             return {"exit_code": 1, "raw_output": f"NodeTestRunnerError: {e}"}
 
     # 2. Python test execution
+    # First attempt: standalone pytest CLI
     try:
         cmd = ["pytest", "-q", "--", test_path]
         proc = subprocess.run(cmd, capture_output=True, cwd=root, text=True)
@@ -289,8 +290,17 @@ def _run_test_runner(test_path: str, repo_root: Optional[Path] = None) -> Dict[s
     except FileNotFoundError:
         pass
 
+    # Second attempt: direct python script execution
     try:
         cmd = [sys.executable, test_path]
+        proc = subprocess.run(cmd, capture_output=True, cwd=root, text=True)
+        return {"exit_code": proc.returncode, "raw_output": proc.stdout + "\n" + proc.stderr}
+    except Exception:
+        pass
+
+    # Third attempt: python -m unittest
+    try:
+        cmd = [sys.executable, "-m", "unittest", test_path]
         proc = subprocess.run(cmd, capture_output=True, cwd=root, text=True)
         return {"exit_code": proc.returncode, "raw_output": proc.stdout + "\n" + proc.stderr}
     except Exception as e:

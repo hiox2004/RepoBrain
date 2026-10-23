@@ -938,3 +938,4 @@ export const ComparisonView: React.FC = () => {
     </div>
   );
 };
+

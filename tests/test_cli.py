@@ -68,5 +68,23 @@ class TestRepoBrainCLI(unittest.TestCase):
                 shutil.rmtree(test_dir, ignore_errors=True)
 
 
+
+    def test_cli_blast_radius(self):
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            with patch("sys.argv", ["repobrain", "blast-radius", "compute_git_blob_sha"]):
+                main()
+            output = fake_out.getvalue()
+            self.assertIn("Analyzing blast radius for symbol:", output)
+            self.assertIn("compute_git_blob_sha", output)
+            self.assertIn("Risk Level:", output)
+
+    def test_cli_benchmark(self):
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            with patch("sys.argv", ["repobrain", "benchmark"]):
+                main()
+            output = fake_out.getvalue()
+            self.assertIn("benchmark_summary", output)
+            self.assertIn("average_token_reduction_pct", output)
+
 if __name__ == "__main__":
     unittest.main()

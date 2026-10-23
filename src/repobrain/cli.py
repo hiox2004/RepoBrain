@@ -9,6 +9,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 from typing import List
 
@@ -130,6 +132,29 @@ def cmd_verify(args: argparse.Namespace) -> None:
     print("\n[+] ALL 4 VERIFICATION GATES DETERMINISTICALLY VERIFIED!")
 
 
+
+def cmd_blast_radius(args: argparse.Namespace) -> None:
+    repo_root = Path(args.repo).resolve()
+    retriever = HybridCodebaseRetriever(repo_root=repo_root)
+    print(f"[*] Analyzing blast radius for symbol: '{args.symbol}'")
+    report = retriever.compute_blast_radius(args.symbol, file_path=args.file)
+
+    print(f"\n[+] Symbol: {report['symbol_name']} (Risk Level: {report['risk_level']})")
+    print(f"[+] Callers Detected ({report['callers_count']}):")
+    for caller in report.get("callers", []):
+        print(f"    - {caller['file_path']} :: {caller['symbol_name']} (Lines {caller['lines']})")
+    print(f"[+] Associated Test Suites ({report['associated_tests_count']}):")
+    for t in report.get("associated_tests", []):
+        print(f"    - {t}")
+    print(f"\n[!] Advisory: {report['advisory']}")
+
+
+def cmd_benchmark(args: argparse.Namespace) -> None:
+    from repobrain.benchmark import run_scientific_benchmarks
+    print("[*] Running RepoBrain Live Dual-Experiment Benchmark Suite...\n")
+    results = run_scientific_benchmarks(repo_root=Path(args.repo).resolve())
+    print(json.dumps(results, indent=2))
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="repobrain",
@@ -164,6 +189,16 @@ def main() -> None:
     p_episodes.add_argument("--repo", default=".", help="Repository root path")
     p_episodes.add_argument("--limit", type=int, default=10, help="Max episodes to display")
 
+    # blast-radius
+    p_blast = subparsers.add_parser("blast-radius", help="Calculate static blast radius & dependent callers for a symbol")
+    p_blast.add_argument("symbol", help="Target symbol name (e.g. compute_git_blob_sha, SanctuaryPolicyGuard)")
+    p_blast.add_argument("--file", default=None, help="Optional relative file path constraint")
+    p_blast.add_argument("--repo", default=".", help="Repository root path")
+
+    # benchmark
+    p_bench = subparsers.add_parser("benchmark", help="Run comprehensive dual-experiment token & speed benchmarks")
+    p_bench.add_argument("--repo", default=".", help="Repository root path")
+
     # verify
     p_verify = subparsers.add_parser("verify", help="Run the 4-Gate Deterministic Stress Test")
 
@@ -180,6 +215,10 @@ def main() -> None:
         cmd_episodes(args)
     elif args.command == "verify":
         cmd_verify(args)
+    elif args.command == "blast-radius":
+        cmd_blast_radius(args)
+    elif args.command == "benchmark":
+        cmd_benchmark(args)
 
 
 if __name__ == "__main__":

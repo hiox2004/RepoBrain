@@ -74,16 +74,19 @@ class SanctuaryPolicyGuard:
     def validate_paths(self, target_paths: List[str]) -> Tuple[bool, Optional[str]]:
         """Validates that all target paths are within repo bounds and do not hit protected globs."""
         for rel_path in target_paths:
+            # Normalize path delimiters for cross-platform compatibility
+            normalized_rel = rel_path.replace("\\", "/").lstrip("/")
             # Prevent directory traversal
-            resolved = (self.repo_root / rel_path).resolve()
+            resolved = (self.repo_root / normalized_rel).resolve()
             try:
                 resolved.relative_to(self.repo_root)
             except ValueError:
                 return False, f"Path traversal attempt blocked: {rel_path}"
 
-            # Check protected globs
+            # Check protected globs (matching both relative path and file basename)
             for pattern in self.protected_patterns:
-                if fnmatch.fnmatch(rel_path, pattern):
+                clean_pattern = pattern.replace("\\", "/").lstrip("/")
+                if fnmatch.fnmatch(normalized_rel, clean_pattern) or fnmatch.fnmatch(Path(normalized_rel).name, clean_pattern):
                     return False, f"Sanctuary policy violation: '{rel_path}' matches protected pattern '{pattern}'"
         return True, None
 
@@ -315,6 +318,8 @@ def parse_diff_target_paths(patch_str: str) -> List[str]:
     for line in patch_str.splitlines():
         if line.startswith("+++ b/") or line.startswith("+++ "):
             p = line[6:].strip() if line.startswith("+++ b/") else line[4:].strip()
+            p = p.strip('"\'')
+            p = p.replace("\\", "/")
             if p != "/dev/null" and p not in paths:
                 paths.append(p)
     return paths
