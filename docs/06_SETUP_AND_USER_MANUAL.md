@@ -281,4 +281,20 @@ SanctuaryPolicyError: 'package-lock.json' matches protected pattern '*.lock'
 
 ---
 
+## 10. Multi-Agent Integration Quick Reference
+
+RepoBrain functions as a standard FastMCP server over `stdio`. It connects identically across modern AI agent environments:
+
+| Agent Host | Configuration Location / Command | Transport |
+| :--- | :--- | :--- |
+| **Google Antigravity (AGY)** | `~/.gemini/config/mcp_config.json` or `.agents/plugins/repobrain/` | `stdio` |
+| **Anthropic Claude Code** | `claude mcp add repobrain -- python -m repobrain.server` or `.claude/mcp.json` | `stdio` |
+| **OpenAI Codex / Cursor** | `~/.cursor/mcp.json` (`mcpServers.repobrain`) | `stdio` |
+| **Codeium Windsurf** | `~/.codeium/windsurf/mcp_config.json` | `stdio` |
+
+For full benchmarks, token compression ratios, and cross-agent compounding memory verification, see [07_AGENT_INTEGRATION_AND_EVALUATION_REPORT.md](./07_AGENT_INTEGRATION_AND_EVALUATION_REPORT.md).
+
+---
+
 *Authored by the RepoBrain Systems Engineering Team • October 2026*
+

@@ -9,6 +9,7 @@ Welcome to the **RepoBrain** documentation library. This folder is organized hie
 ```
 docs/
 ├── README.md                          <-- (You are here) Master Portal & Reading Paths
+├── 07_AGENT_INTEGRATION_AND_EVALUATION_REPORT.md <-- Agent Setup & Dogfooding Evaluation
 ├── 06_SETUP_AND_USER_MANUAL.md        <-- Setup & User Manual: Antigravity, Claude Code, Tools
 ├── 01_LAYMAN_EXPLANATION.md           <-- Plain English: E2E project guide & analogies
 ├── 02_FOUNDING_ARCHITECTURE.md        <-- Full Technical Spec: 5 Pillars & 8 Guardrails

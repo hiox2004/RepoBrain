@@ -196,6 +196,9 @@ class HybridCodebaseRetriever:
         """
         ts_q_str, query_tokens = build_disjunction_tsquery(query)
 
+        if not self.children_db:
+            self.scan_repository()
+
         all_children: List[Tuple[ASTParentNode, ASTChildNode]] = []
         for rel_path, parent in self.parents_db.items():
             children = self.children_db.get(rel_path, [])
