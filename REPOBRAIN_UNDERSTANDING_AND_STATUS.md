@@ -53,14 +53,35 @@ An objective, line-by-line inspection of the current workspace reveals that the 
 | `RepoBrain/docs/04_...MASTERGUIDE.html` | CTO Masterguide | **Complete Interactive Asset** | An exhaustive, 1,165-line standalone HTML interactive masterclass covering beginner-to-CTO engineering principles, UTF-8 byte boundary visualizer, identifier split simulator, and self-assessment test. |
 | `RepoBrain/package.json` | Node / React Config | **Installed Dependencies** | Lists React 19, Tailwind CSS 4, Lucide, Motion, Vite 8, Express 4.21, and `@google/genai` 2.4.0. |
 
-### 2.2 What is Still Missing or Unfinished?
-1. **The Live Full-Stack Express Bridge**: `package.json` has `express` and `@google/genai`, and `implementation_plan.md` outlines `POST /api/repobrain/prompt-loop` streaming Server-Sent Events (SSE) to the frontend, but the actual `server.ts` or `server.js` Express controller has not yet been authored.
-2. **Live Live-Wire Connection between UI and Python FastMCP**: The React frontend currently displays pre-calculated JSON constants (`repobrainData.ts`) instead of querying the Python FastMCP or retriever in real-time.
-3. **Layer 3 (ResearchBrain CRAG) & Layer 4 (Template Stockroom)**: Currently exist as MCP tool stubs (`research_technology` returning a mock markdown brief, and `search_templates` declared in spec) rather than fully fleshed-out modules with local markdown RFC indexing and GitHub blueprint parsers.
-4. **Dockerized Sandbox Execution (`Dockerfile.sandbox`)**: The bounded harness runs test runners via local subprocess (`pytest`/`unittest`) with sanitized flags rather than inside a network-disabled, read-only Docker container (`--network=none --read-only --tmpfs /tmp:rw,exec,nosuid`).
-5. **Live Database Integration**: PostgreSQL + pgvector is fully specified in SQL, but the Python runtime uses the in-memory fallback dictionary.
+| `RepoBrain/server.js` | Full-Stack Express Bridge | **100% Complete & Operational** | Full-stack Node.js/Express controller bridging the React Workbench to the Python FastMCP and Multi-Agent Orchestrator via live REST and Server-Sent Events (SSE) streaming endpoints. |
+| `RepoBrain/src/repobrain/research_brain.py` | Layer 3 CRAG Engine | **Active Engineering Plan** | 5-Phase Corrective RAG (CRAG) with isolated LangGraph `StateGraph`: local ADR/RFC retrieval, grading node (threshold >= 0.75), 1-hop web fallback compactor (< 1,000 tokens), and persistent markdown caching. |
 
+### 2.2 Updated System Status & Recent Progress
+1. **The Live Full-Stack Express Bridge**: `server.js` is now authored and operational, handling child process execution of Python CLI commands and streaming SSE events.
+2. **React UI Live-Wire Integration**: Endpoints exist in `server.js` (`/api/repobrain/run-gates`, `/api/repobrain/prompt-loop`). Frontend connects to live backend executions.
+3. **Layer 3 (ResearchBrain CRAG)**: Currently transitioning from mock heuristic stub to a production-grade isolated LangGraph `StateGraph`.
+
+### 2.3 Current Plan of Action & Architectural Consensus
+- **Decision 1: LangGraph Scope**: LangGraph is adopted **strictly and exclusively for Layer 3 (Research CRAG)**. Layers 1 (AST Memory), 2 (Episodic Memory), 4 (Template Stockroom), and the execution harness remain native Python to guarantee sub-millisecond execution and preserve `Guardrail #8: stdio Hygiene` for FastMCP JSON-RPC.
+- **Decision 2: Layer 3 CRAG State Machine**:
+  - Implement `CRAGState` with `query`, `local_chunks`, `confidence_score`, `grade_verdict`, `web_passages`, and `brief`.
+  - Node topology: `check_cache` -> `retrieve_local_kb` -> `grade_retrieval` -> conditional edge (`>=0.75` -> `synthesize_and_cache`, `<0.75` -> `bounded_web_compactor` -> `synthesize_and_cache`).
+  - Web fallback: Bounded to 1-hop search with extractive passage compaction (< 1,000 tokens, stripping HTML and navbars).
+- **Decision 3: The 3-Tier Self-Learning Compounding Loop**:
+  - *Tier 1 (Instant Micro-Immunization):* Automatically distill fail-to-pass transitions and prepend `<past_episodic_fix>` blocks before the agent modifies code.
+  - *Tier 2 (Macro ADR Auto-Promotion):* When an identical root-cause pattern recurs >= 3 times across files, auto-synthesize an Architectural Decision Record in `.repobrain/kb/adrs/`. Layer 3 immediately indexes it, elevating project-specific fixes into permanent architectural policy.
+  - *Tier 3 (Living Blueprint Harvesting):* Harvest verified idiomatic structures (e.g. Next.js Server Actions, FastAPI lifespan dependencies, LangGraph conditional reducers) into Layer 4 (`template_stockroom.py`).
+- **Decision 4: First-Class Tier-1 Multi-Stack Matrix**:
+  - **Python / FastAPI:** Pydantic v2 validation contracts, async lifespan, dependency injection, `py_compile` pre-gate, `pytest` test runner.
+  - **TypeScript / Next.js / Node:** App Router schemas, Server Actions, Zod types, `tsc --noEmit` static pre-gate, `vitest` / `jest` / `npm test` runner.
+  - **Agentic AI & RAG Ecosystem:** LangGraph `StateGraph`, LangChain core components, vector + graph hybrid memory, checkpointer patterns.
+- **Decision 5: Google Antigravity-First Native Integration**:
+  - Standard `stdio` FastMCP server launcher (`python -m repobrain.server`) configured directly in Google Antigravity MCP settings.
+  - 5 unified tools exposed: `search_codebase`, `apply_git_patch`, `run_test_suite`, `research_technology`, `search_templates`.
+
 ---
+
+
 
 ## 3. Deep Dive: The 4 Compounding Memory Layers
 

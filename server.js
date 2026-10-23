@@ -21,6 +21,13 @@ const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
 
+// Serve public static assets & docs masterguide
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/docs', express.static(path.join(__dirname, 'docs')));
+app.get('/study-guide.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'study-guide.html'));
+});
+
 // Enable CORS for local Vite dev server
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');

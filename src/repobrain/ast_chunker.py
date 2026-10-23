@@ -252,9 +252,13 @@ class ASTCodeChunker:
         source_text = source_bytes.decode("utf-8")
 
         import_lines = []
+        directive = None
         for line in source_text.splitlines():
             line_s = line.strip()
-            if line_s.startswith("import ") or line_s.startswith("export * from") or line_s.startswith("export {"):
+            if line_s in ('"use server";', "'use server';", '"use client";', "'use client';"):
+                directive = line_s.replace(';', '').replace('"', '').replace("'", "")
+                import_lines.append(line_s)
+            elif line_s.startswith("import ") or line_s.startswith("export * from") or line_s.startswith("export {"):
                 import_lines.append(line_s)
         imports_header = "\n".join(import_lines)
 
@@ -263,7 +267,7 @@ class ASTCodeChunker:
             file_path=file_path,
             language="typescript",
             imports_header=imports_header,
-            enclosing_scope=None,
+            enclosing_scope=f"directive:{directive}" if directive else None,
             git_blob_sha=git_blob_sha,
         )
 
@@ -273,22 +277,21 @@ class ASTCodeChunker:
         while i < len(lines):
             line = lines[i]
 
-            # Interface or type definition (methodless schema)
-            type_match = re.match(r"^\s*(export\s+)?(interface|type)\s+([A-Za-z0-9_]+)", line)
-            if type_match:
-                symbol_name = type_match.group(3)
+            # 1. Zod schema definition: export const FooSchema = z.object(...)
+            zod_match = re.match(r"^\s*(?:export\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*z\.", line)
+            if zod_match:
+                symbol_name = zod_match.group(1)
                 start_line = i + 1
                 start_byte = line_offsets[i]
-
                 depth = 0
                 end_line = start_line
                 for j in range(i, len(lines)):
-                    depth += lines[j].count("{") - lines[j].count("}")
-                    if depth <= 0 and (lines[j].strip().endswith("}") or lines[j].strip().endswith(";")):
+                    depth += lines[j].count("(") - lines[j].count(")") + lines[j].count("{") - lines[j].count("}")
+                    if depth <= 0 and (lines[j].strip().endswith(";") or lines[j].strip().endswith(")")):
                         end_line = j + 1
                         break
                 end_byte = line_offsets[end_line] if end_line < len(line_offsets) else len(source_bytes)
-                body = self._slice_bytes(source_bytes, start_byte, end_byte).rstrip("\n")
+                body = self._slice_bytes(source_bytes, start_byte, end_byte).rstrip("\r\n")
 
                 children.append(
                     ASTChildNode(
@@ -307,11 +310,123 @@ class ASTCodeChunker:
                 i = end_line
                 continue
 
-            # Exported function or const arrow function
-            fn_match = re.match(r"^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z0-9_]+)", line)
-            arrow_match = re.match(r"^\s*(?:export\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s+)?\(.*?\)\s*(?::\s*.*?)?\s*=>", line)
-            if fn_match or arrow_match:
-                symbol_name = fn_match.group(1) if fn_match else arrow_match.group(1) # type: ignore
+            # 2. Interface or type definition (methodless schema)
+            type_match = re.match(r"^\s*(?:export\s+)?(interface|type)\s+([A-Za-z0-9_]+)", line)
+            if type_match:
+                symbol_name = type_match.group(2)
+                start_line = i + 1
+                start_byte = line_offsets[i]
+
+                depth = 0
+                end_line = start_line
+                for j in range(i, len(lines)):
+                    depth += lines[j].count("{") - lines[j].count("}")
+                    if depth <= 0 and (lines[j].strip().endswith("}") or lines[j].strip().endswith(";")):
+                        end_line = j + 1
+                        break
+                end_byte = line_offsets[end_line] if end_line < len(line_offsets) else len(source_bytes)
+                body = self._slice_bytes(source_bytes, start_byte, end_byte).rstrip("\r\n")
+
+                children.append(
+                    ASTChildNode(
+                        child_id=uuid4(),
+                        parent_id=parent_node.parent_id,
+                        file_path=file_path,
+                        node_kind="type_definition",
+                        symbol_name=symbol_name,
+                        signature=line.strip(),
+                        docstring=None,
+                        body_code=body,
+                        start_line=start_line,
+                        end_line=end_line,
+                    )
+                )
+                i = end_line
+                continue
+
+            # 3. TypeScript Class definitions and methods
+            class_match = re.match(r"^\s*(?:export\s+)?(?:abstract\s+)?class\s+([A-Za-z0-9_]+)", line)
+            if class_match:
+                class_name = class_match.group(1)
+                start_line = i + 1
+                start_byte = line_offsets[i]
+
+                depth = 0
+                end_line = start_line
+                for j in range(i, len(lines)):
+                    depth += lines[j].count("{") - lines[j].count("}")
+                    if depth <= 0 and lines[j].strip().endswith("}"):
+                        end_line = j + 1
+                        break
+                end_byte = line_offsets[end_line] if end_line < len(line_offsets) else len(source_bytes)
+                body = self._slice_bytes(source_bytes, start_byte, end_byte).rstrip("\r\n")
+
+                # Scan methods within class
+                found_methods = 0
+                for k in range(start_line - 1, end_line):
+                    m_line = lines[k]
+                    m_match = re.match(r"^\s*(?:public\s+|private\s+|protected\s+|async\s+)*(?:async\s+)?([A-Za-z0-9_]+)\s*\(.*?\)", m_line)
+                    if m_match and not m_line.strip().startswith("//") and not m_line.strip().startswith("/*"):
+                        m_name = m_match.group(1)
+                        if m_name not in ("if", "for", "while", "switch", "catch"):
+                            m_start = k + 1
+                            m_depth = 0
+                            m_end = m_start
+                            for l_idx in range(k, end_line):
+                                m_depth += lines[l_idx].count("{") - lines[l_idx].count("}")
+                                if m_depth <= 0 and lines[l_idx].strip().endswith("}"):
+                                    m_end = l_idx + 1
+                                    break
+                            m_body = self._slice_bytes(source_bytes, line_offsets[k], line_offsets[m_end] if m_end < len(line_offsets) else len(source_bytes)).rstrip("\r\n")
+                            children.append(
+                                ASTChildNode(
+                                    child_id=uuid4(),
+                                    parent_id=parent_node.parent_id,
+                                    file_path=file_path,
+                                    node_kind="method",
+                                    symbol_name=f"{class_name}.{m_name}",
+                                    signature=m_line.strip(),
+                                    docstring=None,
+                                    body_code=m_body,
+                                    start_line=m_start,
+                                    end_line=m_end,
+                                )
+                            )
+                            found_methods += 1
+
+                if found_methods == 0:
+                    # Methodless class schema
+                    children.append(
+                        ASTChildNode(
+                            child_id=uuid4(),
+                            parent_id=parent_node.parent_id,
+                            file_path=file_path,
+                            node_kind="type_definition",
+                            symbol_name=class_name,
+                            signature=line.strip(),
+                            docstring=None,
+                            body_code=body,
+                            start_line=start_line,
+                            end_line=end_line,
+                        )
+                    )
+
+                i = end_line
+                continue
+
+            # 4. Functions (including export default, async, Next.js Server Actions, Route Handlers, React Components)
+            fn_match = re.match(r"^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function(?:\s+([A-Za-z0-9_]+))?", line)
+            arrow_match = re.match(r"^\s*(?:export\s+)?(?:default\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s+)?\(.*?\)\s*(?::\s*.*?)?\s*=>", line)
+
+            if (fn_match and (fn_match.group(1) or "default" in line)) or arrow_match:
+                if arrow_match:
+                    symbol_name = arrow_match.group(1)
+                elif fn_match and fn_match.group(1):
+                    symbol_name = fn_match.group(1)
+                else:
+                    stem = file_path.replace("\\", "/").split("/")[-1].split(".")[0]
+                    symbol_name = f"default_{stem}"
+
                 start_line = i + 1
                 start_byte = line_offsets[i]
                 depth = 0
@@ -322,7 +437,11 @@ class ASTCodeChunker:
                         end_line = j + 1
                         break
                 end_byte = line_offsets[end_line] if end_line < len(line_offsets) else len(source_bytes)
-                body = self._slice_bytes(source_bytes, start_byte, end_byte).rstrip("\n")
+                body = self._slice_bytes(source_bytes, start_byte, end_byte).rstrip("\r\n")
+
+                # Detect Next.js Server Actions
+                is_server_action = (directive == "use server") or ('"use server"' in body) or ("'use server'" in body)
+                annotated_symbol = f"ServerAction.{symbol_name}" if (is_server_action and not symbol_name.startswith("ServerAction.")) else symbol_name
 
                 children.append(
                     ASTChildNode(
@@ -330,7 +449,7 @@ class ASTCodeChunker:
                         parent_id=parent_node.parent_id,
                         file_path=file_path,
                         node_kind="callable",
-                        symbol_name=symbol_name,
+                        symbol_name=annotated_symbol,
                         signature=line.strip(),
                         docstring=None,
                         body_code=body,

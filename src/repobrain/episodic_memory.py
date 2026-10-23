@@ -88,6 +88,64 @@ class EpisodicMemoryStore:
     def all_episodes(self) -> List[EpisodicBugRecord]:
         return list(self._episodes.values())
 
+    def promote_recurring_to_adrs(self, repo_root: Path, min_count: int = 3) -> List[Path]:
+        """
+        Tier 2 Self-Learning Compounding Loop:
+        Clusters episodes by error signature / root cause keywords.
+        When an issue recurs >= min_count times, auto-synthesizes an Architectural Decision Record
+        into .repobrain/kb/adrs/ and returns list of created ADR paths.
+        """
+        import re
+        import datetime
+        from collections import defaultdict
+
+        clusters: Dict[str, List[EpisodicBugRecord]] = defaultdict(list)
+        for ep in self._episodes.values():
+            # Strip numbers and punctuation to cluster identical logical errors
+            clean_sig = re.sub(r"[\d\'\"]+", "", ep.error_signature.splitlines()[-1] if ep.error_signature else "")
+            sig_tokens = [t.lower() for t in re.findall(r"[a-zA-Z_]+", clean_sig) if len(t) > 2 and t.lower() not in ("traceback", "file", "line")]
+            cause_tokens = [t.lower() for t in re.findall(r"[a-zA-Z_]+", ep.root_cause_summary) if len(t) > 3]
+            combined = sig_tokens[:2] + cause_tokens[:2]
+            cluster_key = "_".join(combined) if combined else "generic_regression"
+            clusters[cluster_key].append(ep)
+
+        promoted_paths: List[Path] = []
+        adrs_dir = repo_root / ".repobrain" / "kb" / "adrs"
+        adrs_dir.mkdir(parents=True, exist_ok=True)
+
+        for cluster_key, group in clusters.items():
+            if len(group) >= min_count:
+                slug = cluster_key[:48]
+                target_adr = adrs_dir / f"ADR_auto_{slug}.md"
+                if target_adr.exists():
+                    continue
+
+                affected_symbols = list({ep.target_symbol for ep in group})
+                error_signatures = list({ep.error_signature for ep in group})
+                latest = group[-1]
+
+                adr_content = (
+                    f"# ADR: Auto-Promoted Policy for `{cluster_key.replace('_', ' ').title()}`\n\n"
+                    f"**Status:** Enforced Architectural Policy (Auto-Promoted via Tier 2 Self-Learning)\n"
+                    f"**Created:** {datetime.datetime.now(datetime.timezone.utc).isoformat()}\n"
+                    f"**Recurrence Count:** {len(group)} verified fixes across the codebase\n\n"
+                    f"## 1. Problem Statement & Symptoms\n"
+                    f"This failure pattern occurred {len(group)} times across multiple modules:\n"
+                    + "\n".join(f"- `{sym}`: *{sig}*" for sym, sig in zip(affected_symbols[:5], error_signatures[:5]))
+                    + f"\n\n## 2. Enforced Architectural Rule & Root Cause\n"
+                    f"{latest.root_cause_summary}\n\n"
+                    f"## 3. Proven Minimal Fix Pattern (Reference Diff)\n"
+                    f"```diff\n{latest.resolution_diff}\n```\n\n"
+                    f"## 4. Policy Enforcement\n"
+                    f"All coding agents modifying these namespaces must adhere to this pattern. "
+                    f"This document is indexed directly by Layer 3 CRAG at 0 external token cost.\n"
+                )
+
+                target_adr.write_text(adr_content, encoding="utf-8")
+                promoted_paths.append(target_adr)
+
+        return promoted_paths
+
     def clear(self) -> None:
         self._episodes.clear()
         if self.storage_path and self.storage_path.exists():

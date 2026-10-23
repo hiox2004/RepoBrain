@@ -306,3 +306,98 @@ class HybridCodebaseRetriever:
 
         scored_results.sort(key=lambda x: x.cross_encoder_score, reverse=True)
         return scored_results[:top_k]
+
+    def scan_repository(self) -> int:
+        """Indexes all supported source files (.py, .ts, .tsx, .js) in src/."""
+        count = 0
+        src_dir = self.repo_root / "src"
+        if src_dir.exists():
+            for p in src_dir.glob("**/*"):
+                if p.is_file() and p.suffix.lower() in (".py", ".ts", ".tsx", ".js", ".jsx"):
+                    if self.sync_file_if_changed(p):
+                        count += 1
+        return count
+
+    def compute_blast_radius(self, symbol_name: str, file_path: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Lightweight Code Property Graph (CPG) & Blast Radius Analyzer:
+        Traverses caller/callee edges and associated test suites to alert agents
+        of potential breaking contracts before code modification.
+        """
+        if not self.children_db:
+            self.scan_repository()
+
+        short_name = symbol_name.split(".")[-1]
+        all_children = [c for child_list in self.children_db.values() for c in child_list]
+
+        # 1. Locate target symbol
+        target_child = None
+        for c in all_children:
+            if c.symbol_name == symbol_name:
+                target_child = c
+                break
+            if file_path and c.file_path == file_path and (c.symbol_name.endswith(short_name) or short_name in c.symbol_name):
+                target_child = c
+                break
+
+        if not target_child:
+            for c in all_children:
+                if c.symbol_name.endswith(short_name) or short_name == c.symbol_name:
+                    target_child = c
+                    break
+
+        # 2. Find callers / dependents in the codebase (1-hop incoming edges)
+        callers = []
+        for c in all_children:
+            if target_child and c.child_id == target_child.child_id:
+                continue
+            if short_name in c.body_code or symbol_name in c.body_code:
+                callers.append({
+                    "symbol_name": c.symbol_name,
+                    "file_path": c.file_path,
+                    "node_kind": c.node_kind,
+                    "lines": f"{c.start_line}-{c.end_line}",
+                })
+
+        # 3. Scan test files in tests/
+        associated_tests = []
+        tests_dir = self.repo_root / "tests"
+        if tests_dir.exists():
+            for t_file in tests_dir.glob("**/*"):
+                if t_file.is_file() and t_file.suffix in (".py", ".ts", ".js"):
+                    try:
+                        content = t_file.read_text(encoding="utf-8", errors="ignore")
+                        if short_name in content or symbol_name in content:
+                            associated_tests.append(t_file.relative_to(self.repo_root).as_posix())
+                    except Exception:
+                        pass
+
+        # 4. Assess risk level
+        caller_count = len(callers)
+        test_count = len(associated_tests)
+
+        if caller_count >= 3 or test_count >= 2:
+            risk_level = "HIGH"
+        elif caller_count >= 1 or test_count >= 1:
+            risk_level = "MODERATE"
+        else:
+            risk_level = "LOW"
+
+        advisory = (
+            f"Modifying '{symbol_name}' impacts {caller_count} caller(s) across {len({c['file_path'] for c in callers})} file(s) "
+            f"and is verified by {test_count} test suite(s). "
+            f"{'Preserve parameter contracts and return signatures.' if risk_level != 'LOW' else 'Isolated symbol; low risk of transitive regressions.'}"
+        )
+
+        return {
+            "symbol_name": symbol_name,
+            "short_name": short_name,
+            "found_target": target_child is not None,
+            "file_path": target_child.file_path if target_child else (file_path or "unknown"),
+            "callers_count": caller_count,
+            "callers": callers,
+            "associated_tests_count": test_count,
+            "associated_tests": associated_tests,
+            "risk_level": risk_level,
+            "advisory": advisory,
+        }

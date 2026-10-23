@@ -110,6 +110,86 @@ def find_symbol(name: str, file_pattern: str = "*.py") -> list[dict]:
                 start_line=30,
                 end_line=36,
             ),
+            TemplateBlueprint(
+                blueprint_id=uuid4(),
+                repo_name="langchain-ai/langgraph",
+                file_path="libs/langgraph/graph/state.py",
+                symbol_name="StateGraph.conditional_edges",
+                stack_domain="langgraph",
+                description="LangGraph StateGraph assembly with TypedDict state and conditional branching.",
+                code_snippet="""from typing import TypedDict, Optional, Literal
+from langgraph.graph import StateGraph, START, END
+
+class AgentState(TypedDict):
+    query: str
+    confidence: float
+    verdict: Literal["CORRECT", "AMBIGUOUS", "INCORRECT"]
+
+builder = StateGraph(AgentState)
+builder.add_node("grade", grade_node)
+builder.add_node("web_search", web_search_node)
+builder.add_node("synthesize", synthesize_node)
+
+builder.add_edge(START, "grade")
+builder.add_conditional_edges("grade", lambda s: "synthesize" if s["confidence"] >= 0.75 else "web_search")
+builder.add_edge("web_search", "synthesize")
+builder.add_edge("synthesize", END)
+graph = builder.compile()""",
+                start_line=15,
+                end_line=36,
+            ),
+            TemplateBlueprint(
+                blueprint_id=uuid4(),
+                repo_name="vercel/next.js",
+                file_path="examples/app-dir-actions/app/actions.ts",
+                symbol_name="ServerAction.ZodValidation",
+                stack_domain="nextjs",
+                description="Next.js 15 Server Action with Zod schema parsing and typed return status.",
+                code_snippet="""'use server';
+
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+
+const InputSchema = z.object({
+  id: z.string().uuid(),
+  amount: z.number().positive(),
+});
+
+export async function processPaymentAction(rawInput: unknown) {
+  const result = InputSchema.safeParse(rawInput);
+  if (!result.success) {
+    return { success: false, errors: result.error.flatten().fieldErrors };
+  }
+  // Execute database transaction
+  revalidatePath('/dashboard/invoices');
+  return { success: true, data: result.data };
+}""",
+                start_line=1,
+                end_line=22,
+            ),
+            TemplateBlueprint(
+                blueprint_id=uuid4(),
+                repo_name="tiangolo/fastapi",
+                file_path="fastapi/routing.py",
+                symbol_name="FastAPI.lifespan",
+                stack_domain="fastapi",
+                description="FastAPI modern async lifespan context manager replacing deprecated on_event handlers.",
+                code_snippet="""from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Setup resources on startup
+    db_pool = await init_database_pool()
+    app.state.db = db_pool
+    yield
+    # Clean teardown on shutdown
+    await db_pool.close()
+
+app = FastAPI(lifespan=lifespan)""",
+                start_line=10,
+                end_line=25,
+            ),
         ])
 
     def search_templates(self, query: str, stack_domain: str = "all", limit: int = 3) -> List[TemplateBlueprint]:
@@ -124,9 +204,14 @@ def find_symbol(name: str, file_pattern: str = "*.py") -> list[dict]:
                 continue
 
             text = f"{bp.repo_name} {bp.symbol_name} {bp.description} {bp.stack_domain}".lower()
-            bp_tokens = set(re.findall(r"\w+", text))
+            expanded_text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text).lower()
+            bp_tokens = set(re.findall(r"\w+", expanded_text))
             intersection = q_tokens.intersection(bp_tokens)
             score = len(intersection) / max(1, len(q_tokens))
+
+            for q in q_tokens:
+                if q in expanded_text or any(q in tok for tok in bp_tokens):
+                    score += 0.35
 
             if bp.symbol_name.lower() in query.lower() or bp.stack_domain.lower() in query.lower():
                 score += 0.5
@@ -140,3 +225,29 @@ def find_symbol(name: str, file_pattern: str = "*.py") -> list[dict]:
     def add_blueprint(self, blueprint: TemplateBlueprint) -> None:
         self._blueprints.append(blueprint)
 
+    def harvest_blueprint(
+        self,
+        symbol_name: str,
+        file_path: str,
+        code_snippet: str,
+        stack_domain: str = "general",
+        repo_name: str = "workspace/living-blueprint",
+        description: str = "Living blueprint harvested from verified task completion.",
+    ) -> TemplateBlueprint:
+        """
+        Tier 3 Self-Learning Living Blueprint Harvest:
+        Stores verified patterns from passing test runs into Layer 4 Stockroom.
+        """
+        bp = TemplateBlueprint(
+            blueprint_id=uuid4(),
+            repo_name=repo_name,
+            file_path=file_path,
+            symbol_name=symbol_name,
+            stack_domain=stack_domain,
+            description=description,
+            code_snippet=code_snippet,
+            start_line=1,
+            end_line=len(code_snippet.splitlines()),
+        )
+        self.add_blueprint(bp)
+        return bp

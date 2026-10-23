@@ -446,7 +446,15 @@
       <li><a href="#m10">10. Complete Build &amp; Setup Guide</a></li>
       <li><a href="#m11">11. 8-Question CTO Mastery Check</a></li>
     </ul>
-  </aside>
+  
+    <div class="nav-group">Advanced Agentic Engineering</div>
+    <ul class="nav-list">
+      <li><a href="#m12">12. LangGraph CRAG StateGraph</a></li>
+      <li><a href="#m13">13. 3-Tier Self-Learning Loop</a></li>
+      <li><a href="#m14">14. Multi-Stack Polyglot Matrix</a></li>
+      <li><a href="#m15">15. Antigravity + Claude Code</a></li>
+    </ul>
+</aside>
 
   <!-- MAIN CONTENT -->
   <main class="content">
@@ -1066,7 +1074,169 @@ psql "postgresql://postgres:postgres@localhost:5432/repobrain" -f sql/02_DATABAS
       </div>
     </section>
 
-  </main>
+  
+<!-- Module 12: LangGraph CRAG StateGraph Engine -->
+<section class="module" id="m12">
+  <div class="module-kicker">Module 12 • Evaluator-Driven State Graphs & Self-Correction</div>
+  <h2 class="module-title">LangGraph CRAG Engine: Bounded Corrective RAG with State Graphs</h2>
+  
+  <div class="tier-card tier-architect">
+    <span class="tier-tag tag-architect">Architecture Blueprint</span>
+    <h3>Why Linear RAG Fails in Production Software Engineering</h3>
+    <p>
+      Traditional RAG pipelines are linear: <code>Query → Retrieve Docs → Inject Context → LLM Generate</code>. In real-world software engineering, this naive pipeline causes two catastrophic failure modes:
+    </p>
+    <ul>
+      <li><strong>Context Pollution:</strong> Inaccurate or noisy documentation flooded into the prompt distracts the model from the actual codebase AST.</li>
+      <li><strong>Hallucinated APIs:</strong> When local documentation is sparse or missing, standard RAG retrieves irrelevant text that looks superficially similar, causing the LLM to invent nonexistent methods.</li>
+    </ul>
+    <p>
+      RepoBrain resolves this with a <strong>5-Phase Corrective RAG (CRAG) StateGraph</strong> implemented in <code>src/repobrain/research_brain.py</code>. CRAG introduces an active <strong>Retrieval Grader</strong> between retrieval and synthesis:
+    </p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-title">CRAG State Schema & LangGraph Topology (src/repobrain/research_brain.py)</span>
+      <span class="code-lang">Python 3.14 + LangGraph</span>
+    </div>
+    <pre><code><span class="syn-kw">class</span> <span class="syn-type">CRAGState</span>(<span class="syn-type">TypedDict</span>):
+    query: <span class="syn-type">str</span>
+    domain: <span class="syn-type">str</span>
+    slug: <span class="syn-type">str</span>
+    local_chunks: <span class="syn-type">List</span>[TechKnowledgeChunk]
+    confidence_score: <span class="syn-type">float</span>           <span class="syn-comment"># Continuous relevance score [0.0, 1.0]</span>
+    grade_verdict: <span class="syn-type">Literal</span>[<span class="syn-str">"CORRECT"</span>, <span class="syn-str">"AMBIGUOUS"</span>, <span class="syn-str">"INCORRECT"</span>]
+    web_passages: <span class="syn-type">List</span>[<span class="syn-type">str</span>]            <span class="syn-comment"># Strictly &lt; 1,000 tokens dense snippets</span>
+    brief: <span class="syn-type">Optional</span>[ResearchBrief]    <span class="syn-comment"># Final synthesized brief</span>
+
+<span class="syn-comment"># LangGraph StateGraph Assembly with Conditional Edge Routing</span>
+builder = StateGraph(CRAGState)
+builder.add_node(<span class="syn-str">"check_cache"</span>, _node_check_cache)
+builder.add_node(<span class="syn-str">"retrieve_local_kb"</span>, _node_retrieve_local_kb)
+builder.add_node(<span class="syn-str">"grade_retrieval"</span>, _node_grade_retrieval)
+builder.add_node(<span class="syn-str">"bounded_web_compactor"</span>, _node_bounded_web_compactor)
+builder.add_node(<span class="syn-str">"synthesize_and_cache"</span>, _node_synthesize_and_cache)
+
+<span class="syn-comment"># Routing Rule: If confidence &gt;= 0.75, bypass web search (0 external tokens!)</span>
+<span class="syn-kw">def</span> <span class="syn-fn">route_after_grading</span>(state: CRAGState) -&gt; <span class="syn-type">str</span>:
+    <span class="syn-kw">if</span> state.get(<span class="syn-str">"confidence_score"</span>, <span class="syn-num">0.0</span>) &gt;= <span class="syn-num">0.75</span>:
+        <span class="syn-kw">return</span> <span class="syn-str">"synthesize_and_cache"</span>
+    <span class="syn-kw">return</span> <span class="syn-str">"bounded_web_compactor"</span></code></pre>
+  </div>
+
+  <div class="tier-card tier-mechanics">
+    <span class="tier-tag tag-mechanics">Engineering Invariant</span>
+    <h3>The 0-Token Fastpath & Bounded 1-Hop Compactor</h3>
+    <p>
+      Notice the two extreme optimizations that protect your token budget:
+    </p>
+    <ul>
+      <li><strong>Phase 1 Fastpath:</strong> On query entry, RepoBrain hashes the query into a filesystem slug (e.g. <code>fastapi_lifespan_state</code>). If <code>.repobrain/kb_cache/&lt;slug&gt;.md</code> exists, the StateGraph short-circuits directly to <code>END</code> in <strong>&lt; 5ms at 0 token cost</strong>.</li>
+      <li><strong>Phase 4 Bounded Compactor:</strong> If local confidence is &lt; 0.75, RepoBrain executes strictly <strong>one bounded search hop</strong> using <code>httpx</code> and <code>BeautifulSoup</code> against DuckDuckGo HTML. It strips all DOM elements, navigation bars, and advertisements, isolating 3 dense snippets totaling <strong>&lt; 1,000 tokens</strong>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Module 13: The 3-Tier Self-Learning Loop -->
+<section class="module" id="m13">
+  <div class="module-kicker">Module 13 • Compounding Developer Intelligence</div>
+  <h2 class="module-title">The 3-Tier Self-Learning Loop: Building Software That Learns From Work</h2>
+  
+  <div class="tier-card tier-architect">
+    <span class="tier-tag tag-architect">Staff Engineer Mental Model</span>
+    <h3>Why Codebases Degrade vs. How RepoBrain Compounds</h3>
+    <p>
+      In typical software teams, codebases suffer from <em>entropy</em>: as more features are added, edge-case bugs recur, new engineers repeat past mistakes, and architectural conventions erode. AI coding assistants usually accelerate this degradation because they are completely amnesiac across chat sessions.
+    </p>
+    <p>
+      RepoBrain implements an inverted dynamic: <strong>The more you use it for work, the more domain expertise it gains.</strong>
+    </p>
+  </div>
+
+  <div class="tier-card tier-mechanics">
+    <span class="tier-tag tag-mechanics">The 3 Compounding Tiers</span>
+    <h3>From Bug Fix to Permanent Architectural Law</h3>
+    <ol style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.8;">
+      <li>
+        <strong>Tier 1: Instant Micro-Immunization (`project_episodes`)</strong><br/>
+        Whenever a test transitions from failure on Attempt 1 to passing on Attempt 2 or 3, RepoBrain distills <code>(error_signature, target_symbol, root_cause_summary, resolution_diff)</code>. Future queries touching that symbol immediately receive the fix before code generation begins.
+      </li>
+      <li>
+        <strong>Tier 2: Macro ADR Auto-Promotion (`.repobrain/kb/adrs/`)</strong><br/>
+        When the same root-cause pattern recurs <strong>≥ 3 times across different files</strong> (e.g. Decimal scale truncation, async route parameter awaiting, or unhandled nulls), RepoBrain clusters the episodes and automatically drafts an <strong>Architectural Decision Record (ADR)</strong>. Layer 3 immediately indexes it as permanent architectural law across the entire workspace.
+      </li>
+      <li>
+        <strong>Tier 3: Living Blueprint Harvesting (`template_stockroom.py`)</strong><br/>
+        When you create an idiomatic pattern that passes all tests and linting (such as a Next.js 15 Server Action with Zod validation or a FastAPI async dependency with lifespan state), RepoBrain extracts its skeleton into Layer 4 as a reusable, verified scaffolding pattern.
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- Module 14: Multi-Stack Execution Matrix -->
+<section class="module" id="m14">
+  <div class="module-kicker">Module 14 • Polyglot Engineering Matrix</div>
+  <h2 class="module-title">Multi-Stack Execution Matrix: Python, TypeScript & Agentic AI</h2>
+  
+  <div class="tier-card tier-mechanics">
+    <span class="tier-tag tag-mechanics">First-Class Tier 1 Matrix</span>
+    <h3>Deep Polyglot Support Without AST Drift</h3>
+    <p>
+      RepoBrain does not treat different programming languages as generic text. It provides tailored AST parsing, static pre-gates, and test harnesses for your primary tech stacks:
+    </p>
+    <table style="width:100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.82rem;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+          <th style="padding: 0.6rem;">Stack</th>
+          <th style="padding: 0.6rem;">AST Slicing &amp; Scope Extraction</th>
+          <th style="padding: 0.6rem;">Fast Static Pre-Gate</th>
+          <th style="padding: 0.6rem;">Sanitized Test Runner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 0.6rem; font-weight: 700; color: var(--cyan);">Python / FastAPI</td>
+          <td style="padding: 0.6rem;">Tree-sitter byte offsets; annexes <code>@router.post()</code> decorators and methodless Pydantic <code>BaseModel</code> schemas.</td>
+          <td style="padding: 0.6rem; font-family: var(--mono); color: var(--emerald);">py_compile (150ms)</td>
+          <td style="padding: 0.6rem; font-family: var(--mono);">pytest -q (strips site-packages/)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 0.6rem; font-weight: 700; color: var(--indigo);">TypeScript / Next.js / Node</td>
+          <td style="padding: 0.6rem;">Tree-sitter TS/TSX; preserves <code>"use server"</code> directives, Server Components, Server Actions, and Zod schemas.</td>
+          <td style="padding: 0.6rem; font-family: var(--mono); color: var(--emerald);">tsc --noEmit</td>
+          <td style="padding: 0.6rem; font-family: var(--mono);">vitest run / jest / npm test</td>
+        </tr>
+        <tr>
+          <td style="padding: 0.6rem; font-weight: 700; color: var(--purple);">Agentic AI &amp; LangGraph</td>
+          <td style="padding: 0.6rem;">Slices <code>StateGraph</code> node functions, conditional edge routers, and TypedDict schemas.</td>
+          <td style="padding: 0.6rem; font-family: var(--mono); color: var(--emerald);">TypedDict &amp; Syntax Pre-Gate</td>
+          <td style="padding: 0.6rem; font-family: var(--mono);">State transition test suites</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Module 15: Dual-Agent Synergy -->
+<section class="module" id="m15">
+  <div class="module-kicker">Module 15 • Human &amp; Multi-Agent Workflow</div>
+  <h2 class="module-title">Dual-Agent Synergy: Antigravity + Claude Code + RepoBrain</h2>
+  
+  <div class="tier-card tier-architect">
+    <span class="tier-tag tag-architect">Production Topology</span>
+    <h3>The Architect, The Terminal Worker &amp; The Shared Cognitive Memory</h3>
+    <p>
+      Instead of relying on a single monolithic model to do both high-level system design and low-level line editing, our production workflow pairs two frontier systems around <strong>RepoBrain as the shared cognitive substrate</strong>:
+    </p>
+    <ul>
+      <li><strong>Google Antigravity (Gemini 3.8 Flash High):</strong> Acts as the <em>System Architect &amp; Planner</em>. Decomposes user goals, organizes multi-agent state machines, audits cross-module boundaries, and maintains documentation integrity.</li>
+      <li><strong>Claude Code (Claude 3.7 Sonnet):</strong> Acts as the <em>Precision Terminal Worker</em>. Runs in your terminal via <code>claude</code> or headless via <code>claude -p</code>, executing fast code synthesis, test iteration, and surgical refactoring.</li>
+      <li><strong>RepoBrain FastMCP Server:</strong> Sits in the center as the <em>Single Source of Truth</em>. Both agents query the exact same AST index, share the same bug post-mortems, and are constrained by the same bounded 3-retry surgical rollback harness.</li>
+    </ul>
+  </div>
+</section>
+</main>
 
   <script>
     function setDepth(mode, btn) {

@@ -1,6 +1,6 @@
 [
   {
-    "episode_id": "52dd8c04-5e92-43aa-ad0e-48ab9c19db85",
+    "episode_id": "5988da74-d239-4410-8af3-2290a270c28f",
     "error_signature": "AssertionError: mismatch",
     "target_symbol": "LedgerService.settleInvoiceById",
     "file_path": "src/billing/ledger.py",
@@ -8,7 +8,7 @@
     "resolution_diff": "--- patch"
   },
   {
-    "episode_id": "8e4ed6c3-ba8f-434d-83b0-65f99c439f0f",
+    "episode_id": "31f9fd28-0d79-4c02-871b-d8b14640894b",
     "error_signature": "AssertionError: Decimal('120.0000') != Decimal('120.00')",
     "target_symbol": "LedgerService.settleInvoiceById",
     "file_path": "src/billing/ledger.py",

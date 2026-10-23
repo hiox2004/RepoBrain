@@ -90,6 +90,14 @@ def search_templates(query: str, stack_domain: str = "all") -> List[Dict[str, An
     blueprints = retriever.template_stockroom.search_templates(query=query, stack_domain=stack_domain)
     return [bp.model_dump() for bp in blueprints]
 
+@mcp.tool()
+def get_blast_radius(symbol_name: str, file_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Computes blast radius and call graph dependency impact for a symbol before editing.
+    Returns callers, associated test suites, risk level, and preservation advisory.
+    """
+    return retriever.compute_blast_radius(symbol_name, file_path)
+
 
 @mcp.tool()
 def apply_git_patch(patch_str: str, test_path: str, task_id: str) -> Dict[str, Any]:
@@ -249,12 +257,31 @@ def apply_git_patch(patch_str: str, test_path: str, task_id: str) -> Dict[str, A
 
 
 def _run_test_runner(test_path: str, repo_root: Optional[Path] = None) -> Dict[str, Any]:
-    """Runs pytest/unittest with sanitized flags and -- before paths."""
+    """Runs pytest/unittest for Python or npm/node/vitest for TypeScript/JavaScript."""
     root = (repo_root or REPO_ROOT).resolve()
     if test_path.startswith("-"):
         return {"exit_code": 1, "raw_output": f"SecurityError: flags not permitted in test_path: {test_path}"}
 
-    # First try pytest if installed
+    # 1. TypeScript / JavaScript test execution
+    if test_path.endswith((".ts", ".tsx", ".js", ".jsx", ".mjs")):
+        # Try npx vitest run
+        try:
+            cmd = ["npx", "vitest", "run", "--", test_path]
+            proc = subprocess.run(cmd, capture_output=True, cwd=root, text=True, shell=(sys.platform == "win32"))
+            if proc.returncode == 0 or "FAIL" in proc.stdout or "PASS" in proc.stdout:
+                return {"exit_code": proc.returncode, "raw_output": proc.stdout + "\n" + proc.stderr}
+        except Exception:
+            pass
+
+        # Fallback to node --test
+        try:
+            cmd = ["node", "--test", test_path]
+            proc = subprocess.run(cmd, capture_output=True, cwd=root, text=True)
+            return {"exit_code": proc.returncode, "raw_output": proc.stdout + "\n" + proc.stderr}
+        except Exception as e:
+            return {"exit_code": 1, "raw_output": f"NodeTestRunnerError: {e}"}
+
+    # 2. Python test execution
     try:
         cmd = ["pytest", "-q", "--", test_path]
         proc = subprocess.run(cmd, capture_output=True, cwd=root, text=True)
@@ -262,7 +289,6 @@ def _run_test_runner(test_path: str, repo_root: Optional[Path] = None) -> Dict[s
     except FileNotFoundError:
         pass
 
-    # Fallback to python test script execution
     try:
         cmd = [sys.executable, test_path]
         proc = subprocess.run(cmd, capture_output=True, cwd=root, text=True)

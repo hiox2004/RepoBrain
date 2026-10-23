@@ -58,9 +58,28 @@ Rather than relying on a single monolithic prompt, RepoBrain orchestrates specia
 - **Output:** Emits clean `<ast_context>` XML blocks (parent imports + child body + past episodic fixes), ensuring token consumption remains $<600$ tokens per symbol.
 
 ### Agent 3: ResearchBrain CRAG Specialist (Layer 3)
-- **Role:** Conceptual grounding and documentation retrieval.
+- **Role:** Conceptual grounding, architecture decision retrieval, and bounded web synthesis.
+- **Engine Architecture:** Evaluator-driven **LangGraph `StateGraph`** encapsulated strictly within `src/repobrain/research_brain.py`.
 - **Tools:** `research_technology`.
-- **Output:** Evaluates local ADRs and RFCs. If confidence $\ge 0.75$, responds in 0 external tokens. If $< 0.75$, extracts top 3 dense snippets ($< 1,000$ tokens) and auto-caches them.
+- **State Schema (`CRAGState`):**
+  - `query: str` & `domain: str`
+  - `local_chunks: List[TechKnowledgeChunk]`
+  - `confidence_score: float` (0.0 to 1.0)
+  - `grade_verdict: Literal["CORRECT", "AMBIGUOUS", "INCORRECT"]`
+  - `web_passages: List[str]` (< 1,000 tokens dense snippets)
+  - `brief: Optional[ResearchBrief]`
+- **LangGraph Node Topology & Conditional Routing:**
+  1. `check_cache_node`: Checks `.repobrain/kb_cache/<slug>.md`. On hit, short-circuits to END (0 tokens, < 5ms).
+  2. `retrieve_local_kb_node`: Indexes and queries `.repobrain/kb/` markdown ADRs/RFCs.
+  3. `grade_retrieval_node`: Evaluates semantic relevance and computes confidence score.
+  4. *Conditional Edge:*
+     - If `confidence_score >= 0.75` (`CORRECT`): Route directly to `synthesize_and_cache_node` (**0 external tokens spent**).
+     - If `confidence_score < 0.75` (`AMBIGUOUS`/`INCORRECT`): Route to `bounded_web_compactor_node`.
+  5. `bounded_web_compactor_node`: Executes strictly **1 bounded external search hop**, strips DOM/boilerplate/navbars, and compacts to top 3 dense snippets.
+  6. `synthesize_and_cache_node`: Verifies grounding, writes markdown to `.repobrain/kb_cache/<slug>.md`, and returns typed `ResearchBrief`.
+- **Output:** Emits a structured `ResearchBrief` adhering to the Pydantic data contract.
+
+
 
 ### Agent 4: Sentry & Test Execution Specialist (Layer 2 & 5)
 - **Role:** Execution containment, static validation, test execution, and rollback.
@@ -124,5 +143,64 @@ Agents communicate over structured JSON payloads conforming to `schemas.py`. All
 }
 ```
 
-This guarantees full determinism, observability, and auditability at every stage.
+This guarantees full determinism, observability, and auditability at every stage.
 
+---
+
+## 5. The Compounding Self-Learning Loop & Antigravity Native Integration
+
+RepoBrain does not remain static; it functions as a living memory organism that compounds expertise with every development session.
+
+```mermaid
+flowchart TD
+    TaskPass["Passing Task Execution (Attempt 1, 2, or 3)"] --> Micro["Tier 1: Micro-Distillation<br/>(error_signature, symbol, minimal_diff)"]
+    Micro --> Cache["Append to project_episodes"]
+    
+    Cache --> Cluster{"Pattern Clustering<br/>Has same root cause occurred &ge; 3 times?"}
+    Cluster -->|Yes| ADR["Tier 2: Macro ADR Promotion<br/>Synthesize Architectural Decision Record into .repobrain/kb/adrs/"]
+    Cluster -->|No| NextQuery["Immunize Future Queries<br/>Prepend &lt;past_episodic_fix&gt; context"]
+    
+    ADR --> L3Index["Layer 3 CRAG Indexes New ADR<br/>Elevated to Permanent Architectural Law"]
+    
+    TaskPass --> PatternCheck{"Is this a clean, verified architectural pattern?<br/>(Server Action, FastAPI Dependency, LangGraph Reducer)"}
+    PatternCheck -->|Yes| Harvest["Tier 3: Blueprint Harvesting<br/>Extract minimal structure into Layer 4 template_stockroom.py"]
+```
+
+### 5.1 Multi-Stack Specialization
+1. **Python / FastAPI Stack:**
+   - Detects Pydantic v1 vs v2 patterns (`model_validate`, `field_validator`).
+   - Slices async route handlers, dependency injectors, and lifespan context managers.
+   - Enforces `py_compile` syntax pre-gate and runs `pytest` with sanitized flags.
+2. **TypeScript / Next.js / Node Stack:**
+   - Slices React 19 / Next.js App Router Server Components, Server Actions (`"use server"`), and Zod schemas.
+   - Enforces `tsc --noEmit` / fast AST static pre-gate.
+   - Executes `vitest`, `jest`, or `npm test` with isolated subprocess boundaries.
+3. **Agentic AI & RAG Ecosystem (LangGraph / LangChain):**
+   - Indexes and validates LangGraph `StateGraph`, typed dictionaries, conditional edges, and checkpoint savers.
+   - Automatically harvests reusable state graph patterns and tool node definitions into Layer 4.
+
+### 5.2 Antigravity Native Integration
+RepoBrain connects natively to **Google Antigravity** as a standard `stdio` Model Context Protocol (MCP) server.
+
+In Antigravity's MCP configuration (`mcp_config.json` / workspace settings):
+```json
+{
+  "mcpServers": {
+    "repobrain": {
+      "command": "python",
+      "args": ["-m", "repobrain.server"],
+      "env": {
+        "PYTHONPATH": "src",
+        "TOKENIZERS_PARALLELISM": "false"
+      }
+    }
+  }
+}
+```
+Antigravity automatically discovers and binds the 5 core tools:
+- `search_codebase`: Sub-symbol AST retrieval with 1-hop dependencies.
+- `apply_git_patch`: Sandboxed patch application with syntax pre-gate and rollback.
+- `run_test_suite`: Sanitized test execution with frame stripping.
+- `research_technology`: 5-Phase CRAG LangGraph engine.
+- `search_templates`: Living template stockroom with harvested blueprints.
+

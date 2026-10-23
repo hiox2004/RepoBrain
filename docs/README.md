@@ -1,6 +1,6 @@
 # RepoBrain Documentation Portal
 
-Welcome to the **RepoBrain** documentation library. This folder is organized hierarchically so you can explore the project at whatever depth matches your current needs—from high-level intuition to low-level byte-slicing math.
+Welcome to the **RepoBrain** documentation library. This folder is organized hierarchically so you can explore the project at whatever depth matches your current needs—from high-level intuition to low-level byte-slicing math and complete agent setup.
 
 ---
 
@@ -9,11 +9,13 @@ Welcome to the **RepoBrain** documentation library. This folder is organized hie
 ```
 docs/
 ├── README.md                          <-- (You are here) Master Portal & Reading Paths
+├── 06_SETUP_AND_USER_MANUAL.md        <-- Setup & User Manual: Antigravity, Claude Code, Tools
 ├── 01_LAYMAN_EXPLANATION.md           <-- Plain English: E2E project guide & analogies
 ├── 02_FOUNDING_ARCHITECTURE.md        <-- Full Technical Spec: 5 Pillars & 8 Guardrails
 ├── 03_SYSTEM_STATUS_AND_AUDIT.md      <-- Technical Audit: Where we are now & CTO Q&A
+├── 05_MULTI_AGENT_SYSTEM_OF_WORKING.md <-- Multi-Agent Loop: Roles, States & LangGraph CRAG
 └── interactive/
-    ├── 04_REPOBRAIN_COMPLETE_CTO_MASTERGUIDE.html  <-- Living Interactive Masterclass
+    ├── 04_REPOBRAIN_COMPLETE_CTO_MASTERGUIDE.html  <-- Living Interactive Masterclass (15 Modules)
     └── HOW_TO_OPEN_STUDY_GUIDE.md    <-- Instructions to open the HTML in your browser
 ```
 
@@ -21,13 +23,19 @@ docs/
 
 ## 📖 Recommended Reading Paths
 
-### Path A: "Explain it to me like I'm 5" (10 minutes)
+### Path A: "I Want to Connect My Agent & Use RepoBrain Now" (5 minutes)
+1. Read **[`06_SETUP_AND_USER_MANUAL.md`](06_SETUP_AND_USER_MANUAL.md)**:
+   - Configure **Google Antigravity** or **Claude Code** in one command.
+   - Reference the 6 FastMCP tools and developer prompts.
+   - Run the full-stack React workbench and test verification gates.
+
+### Path B: "Explain it to me like I'm 5" (10 minutes)
 1. Read **[`01_LAYMAN_EXPLANATION.md`](01_LAYMAN_EXPLANATION.md)**:
    - Understand why standard AI coding tools fail on real codebases.
    - Learn the 4 Layers through simple real-world analogies.
    - Walk through an end-to-end task from prompt to verified patch.
 
-### Path B: "Show me the Interactive Visualizer" (15 minutes)
+### Path C: "Show me the Interactive Visualizer" (15 minutes)
 1. Read **[`interactive/HOW_TO_OPEN_STUDY_GUIDE.md`](interactive/HOW_TO_OPEN_STUDY_GUIDE.md)**.
 2. Launch **[`interactive/04_REPOBRAIN_COMPLETE_CTO_MASTERGUIDE.html`](interactive/04_REPOBRAIN_COMPLETE_CTO_MASTERGUIDE.html)** in your browser using:
    ```powershell
@@ -35,11 +43,11 @@ docs/
    ```
 3. Use the **Reading Depth Switcher** (Beginner $\to$ Senior Engineer $\to$ CTO), test the **UTF-8 Byte Slicer Simulator**, and take the **8-question self-assessment**.
 
-### Path C: "I am a Systems Architect / Senior Developer" (30 minutes)
+### Path D: "I am a Systems Architect / Senior Developer" (30 minutes)
 1. Read **[`02_FOUNDING_ARCHITECTURE.md`](02_FOUNDING_ARCHITECTURE.md)**:
    - Inspect the mathematical formulation of Two-Stage Hybrid RRF ($k=60$).
    - Review the UTF-8 byte boundary invariant (`Guardrail #1`).
-   - Examine the 5 FastMCP tools and stdio hygiene rules.
+   - Examine the 6 FastMCP tools and stdio hygiene rules.
 2. Read **[`03_SYSTEM_STATUS_AND_AUDIT.md`](03_SYSTEM_STATUS_AND_AUDIT.md)**:
    - Review the line-by-line implementation status of every module.
    - Read the self-answered CTO interview addressing database topologies, latency, and sandbox security.
@@ -51,10 +59,9 @@ docs/
 To verify that all systems described in these documents are 100% operational in code:
 
 ```powershell
-# Run the 14-test unit & integration suite:
+# Run the 38-test unit & integration suite:
 python -m unittest discover tests
 
 # Run the 4-Gate Deterministic Stress Test:
 python src/repobrain/verify_gates.py
 ```
-

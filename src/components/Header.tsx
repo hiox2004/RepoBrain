@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Shield, Terminal, CheckCircle2, Zap } from 'lucide-react';
+import { Cpu, Shield, Terminal, CheckCircle2, Zap, BookOpen } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
@@ -16,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const tabs = [
     { id: 'gates', label: '4-Gate Verification', icon: CheckCircle2 },
+    { id: 'docs', label: 'Masterguide & Docs', icon: BookOpen },
     { id: 'architecture', label: '3-Layer Architecture', icon: Shield },
     { id: 'ast', label: 'AST Chunker & UTF-8', icon: Cpu },
     { id: 'rrf', label: 'Hybrid RRF (k=60)', icon: Zap },
@@ -44,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">
-                AST Codebase Memory • Two-Stage RRF Reranking • Bounded 3-Retry Harness
+                AST Codebase Memory • Two-Stage RRF Reranking • Bounded 3-Retry Harness • LangGraph CRAG
               </p>
             </div>
           </div>

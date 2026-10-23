@@ -12,6 +12,7 @@ import { RRFCalculatorView } from './components/RRFCalculatorView';
 import { HarnessSimulatorView } from './components/HarnessSimulatorView';
 import { EpisodicMemoryView } from './components/EpisodicMemoryView';
 import { SourceCodeView } from './components/SourceCodeView';
+import { StudyGuideView } from './components/StudyGuideView';
 import { Shield, CheckCircle2, Terminal, Cpu, Database } from 'lucide-react';
 
 export default function App() {
@@ -77,6 +78,8 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'docs' && <StudyGuideView />}
+
         {activeTab === 'architecture' && <ArchitectureView />}
 
         {activeTab === 'ast' && <ASTExplorerView />}
@@ -98,15 +101,14 @@ export default function App() {
           <span>•</span>
           <span>8 Guardrails Active</span>
           <span>•</span>
-          <span>T=0.0 Deterministic</span>
+          <span>LangGraph CRAG Active</span>
+          <span>•</span>
+          <span className="text-cyan-400">UTF-8 Byte Safe</span>
         </div>
-
-        <div className="flex items-center space-x-4">
-          <span className="text-slate-400">Target: <code className="text-cyan-400">src/billing/ledger.py</code></span>
-          <span>•</span>
-          <span className="text-slate-400">RRF: <code className="text-amber-400">k=60</code></span>
-          <span>•</span>
-          <span className="text-slate-400">Max Retries: <code className="text-emerald-400">≤ 3</code></span>
+        <div>
+          <span>Unified FastMCP JSON-RPC</span>
+          <span className="mx-2">•</span>
+          <span className="text-slate-400">Zero Context Bloat</span>
         </div>
       </footer>
     </div>

@@ -61,21 +61,39 @@ RepoBrain V2 is an autonomous codebase memory engine, semantic retrieval pipelin
   $$\text{RRF Score}(c) = \frac{1}{60 + \text{Rank}_{\text{dense}}(c)} + \frac{1}{60 + \text{Rank}_{\text{sparse}}(c)}$$
   Top 40 dense vector candidates ($\vec{v}_{\text{query}} \Leftrightarrow \vec{v}_{\text{child}}$) and Top 40 sparse candidates (`ts_rank_cd(fts_tokens, ts_q, 32)`) are merged via FULL OUTER JOIN into a 25-candidate pool, then reranked by Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) on CPU.
 
-### Pillar 2: Layer 2 — Self-Correcting Episodic Diagnostic Memory (`project_episodes`)
+### Pillar 2: Layer 2 — Self-Learning Episodic Diagnostic Memory (`project_episodes`)
 - **Fail-to-Pass Distillation:** When a task transitions from a test failure (`exit_code != 0` on Attempt 1 or 2) to a test pass (`exit_code == 0` on Attempt 2 or 3), an Errand Worker distills:
   1. `error_signature`: Cleaned exception line (e.g. `AssertionError: Decimal('120.0000') != Decimal('120.00')`).
   2. `target_symbol`: e.g. `LedgerService.settleInvoiceById`.
-  3. `root_cause_summary`: $\le 40$-word explanation.
+  3. `root_cause_summary`: ≤ 40-word explanation.
   4. `resolution_diff`: Verified minimal unified diff.
-- **Immunization:** Subsequent queries automatically retrieve matching episodes and prepend `<past_episodic_fix>` blocks before the agent touches code.
-
+- **The 3-Tier Self-Learning Compounding Loop:**
+  1. *Tier 1 (Instant Micro-Immunization):* Subsequent queries touching matching symbols or error deltas automatically inject `<past_episodic_fix>` blocks before the agent modifies code, eliminating repeated mistakes.
+  2. *Tier 2 (Macro ADR Auto-Promotion):* When an identical root cause pattern recurs ≥ 3 times across different files/modules, RepoBrain clusters the episodes and auto-synthesizes an Architectural Decision Record (ADR) into `.repobrain/kb/adrs/`. Layer 3 immediately indexes it, elevating project-specific fixes to permanent architectural policy.
+  3. *Tier 3 (Living Template Harvesting):* When the agent synthesizes a clean, verified architectural pattern (e.g. a Next.js Server Action with Zod validation, a FastAPI async dependency with lifespan state, or a LangGraph conditional edge reducer), RepoBrain harvests the minimal structure into Layer 4 (`template_stockroom.py`) as a project-specific blueprint.
+- **First-Class Tier-1 Multi-Stack Matrix:**
+  - **Python / FastAPI:** Pydantic v2 validation contracts, async lifespan, dependency injection, `py_compile` pre-gate, `pytest` test runner.
+  - **TypeScript / Next.js / Node:** App Router schemas, Server Actions, Zod types, `tsc --noEmit` static pre-gate, `vitest` / `jest` / `npm test` runner.
+  - **Agentic AI & RAG Ecosystem:** LangGraph `StateGraph`, LangChain core components, vector + graph hybrid memory, checkpointer patterns, and prompt contracts.
+- **Antigravity-First Native Protocol:** Exposes stdio FastMCP endpoints (`search_codebase`, `apply_git_patch`, `run_test_suite`, `research_technology`, `search_templates`, `get_blast_radius`) configured directly in Google Antigravity's MCP client with zero network setup.
+
 ### Pillar 3: Layer 3 — Conceptual ResearchBrain (`research_technology`)
-- **5-Phase Bounded Corrective RAG (CRAG):**
-  1. *Semantic Router:* Short-circuits known parametric queries.
-  2. *Local Domain Tech KB:* Searches `.repobrain/kb/` (ADRs, RFCs, local framework documentation) via Hybrid RRF.
-  3. *Retrieval Grader:* Scores local relevance. If score $\ge 0.75$, responds immediately at **0 external token cost**. If $< 0.75$, triggers at most **1 bounded web search**.
+
+- **5-Phase Bounded Corrective RAG (CRAG) Engine (Isolated LangGraph StateGraph):**
+
+  1. *Semantic Router / Cache Check:* Fast-path lookup against `.repobrain/kb_cache/<slug>.md` (0 tokens, < 5ms).
+
+  2. *Local Domain Tech KB:* Searches `.repobrain/kb/` (ADRs, RFCs, local framework documentation) via Hybrid RRF / keyword scoring.
+
+  3. *Retrieval Grader Node:* Evaluates local relevance confidence $S \in [0.0, 1.0]$. If score $\ge 0.75$, responds immediately at **0 external token cost**. If $< 0.75$, executes a conditional graph edge triggering at most **1 bounded web search**.
+
   4. *Extractive Passage Compactor:* Strips HTML, headers, navbars, and advertisements, isolating 3 dense snippets totaling $< 1,000$ tokens.
-  5. *Grounding Check & Markdown Cache:* Verifies citations and caches markdown briefs in `.repobrain/kb_cache/<slug>.md`.
+
+  5. *Grounding Check & Markdown Cache:* Verifies citations, caches markdown briefs in `.repobrain/kb_cache/<slug>.md`, and emits a typed `ResearchBrief`.
+
+- **Architectural Boundary Invariant:** LangGraph is strictly isolated to Layer 3. Layers 1, 2, 4, and the execution harness remain lightweight, high-performance native Python to preserve `Guardrail #8: stdio Hygiene` and FastMCP JSON-RPC transport stability.
+
+
 
 ### Pillar 4: Layer 4 — GitHub Template Stockroom (`search_templates`)
 - **Vetted Blueprints:** Maintains curated blueprints (`tiangolo/full-stack-fastapi-template`, `shadcn-ui/taxonomy`, `astral-sh/uv`, `oraios/serena`, `taskiq-python/taskiq`).

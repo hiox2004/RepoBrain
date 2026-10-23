@@ -186,19 +186,126 @@ def extract_relevant_frames(raw_output: str) -> str:
     return "\n".join(filtered).strip()
 
 
+def _check_delimiter_balance(text: str) -> Optional[str]:
+    """Fast lexical balance check for braces, brackets, and parentheses in JS/TS."""
+    stack = []
+    pairs = {")": "(", "}": "{", "]": "["}
+    in_single = False
+    in_double = False
+    in_backtick = False
+    in_line_comment = False
+    in_block_comment = False
+
+    i = 0
+    line = 1
+    col = 1
+    while i < len(text):
+        c = text[i]
+        if c == "\n":
+            line += 1
+            col = 0
+            in_line_comment = False
+        col += 1
+
+        # Check comment starts/ends
+        if not in_single and not in_double and not in_backtick:
+            if not in_block_comment and not in_line_comment:
+                if c == "/" and i + 1 < len(text) and text[i + 1] == "/":
+                    in_line_comment = True
+                    i += 2
+                    continue
+                if c == "/" and i + 1 < len(text) and text[i + 1] == "*":
+                    in_block_comment = True
+                    i += 2
+                    continue
+            elif in_block_comment:
+                if c == "*" and i + 1 < len(text) and text[i + 1] == "/":
+                    in_block_comment = False
+                    i += 2
+                    continue
+                i += 1
+                continue
+
+        if in_line_comment or in_block_comment:
+            i += 1
+            continue
+
+        # Handle strings
+        if c == "\\" and (in_single or in_double or in_backtick):
+            i += 2  # skip escaped character
+            continue
+        if c == "'" and not in_double and not in_backtick:
+            in_single = not in_single
+            i += 1
+            continue
+        if c == '"' and not in_single and not in_backtick:
+            in_double = not in_double
+            i += 1
+            continue
+        if c == "`" and not in_single and not in_double:
+            in_backtick = not in_backtick
+            i += 1
+            continue
+
+        if in_single or in_double or in_backtick:
+            i += 1
+            continue
+
+        # Check delimiter pairs
+        if c in "({[":
+            stack.append((c, line, col))
+        elif c in ")}]":
+            if not stack:
+                return f"Unexpected closing delimiter '{c}' at line {line}:{col}"
+            last_open, o_line, o_col = stack.pop()
+            if pairs[c] != last_open:
+                return f"Mismatched delimiter: '{last_open}' (line {o_line}) closed with '{c}' at line {line}:{col}"
+
+        i += 1
+
+    if in_backtick:
+        return "Unterminated template literal string (`)"
+    if in_single or in_double:
+        return "Unterminated string literal"
+    if stack:
+        last_open, o_line, o_col = stack.pop()
+        return f"Unclosed delimiter '{last_open}' opened at line {o_line}:{o_col}"
+
+    return None
+
+
 def fast_static_syntax_check(repo_root: Path, target_paths: List[str]) -> Tuple[bool, str]:
     """
     150ms Static Syntax Pre-Gate:
-    Runs py_compile on python files before invoking expensive test suites.
+    Runs py_compile on Python files, and lexical balance / node --check on JS/TS files.
     """
+    import subprocess
     for rel_path in target_paths:
+        full_path = repo_root / rel_path
+        if not full_path.exists():
+            continue
+
         if rel_path.endswith(".py"):
-            full_path = repo_root / rel_path
-            if full_path.exists():
-                try:
-                    py_compile.compile(str(full_path), doraise=True)
-                except py_compile.PyCompileError as pe:
-                    return False, f"StaticSyntaxError in '{rel_path}':\n{pe}"
+            try:
+                py_compile.compile(str(full_path), doraise=True)
+            except py_compile.PyCompileError as pe:
+                return False, f"StaticSyntaxError in '{rel_path}':\n{pe}"
+
+        elif rel_path.endswith((".ts", ".tsx", ".js", ".jsx")):
+            try:
+                content = full_path.read_text(encoding="utf-8")
+                delim_err = _check_delimiter_balance(content)
+                if delim_err:
+                    return False, f"StaticSyntaxError in '{rel_path}':\n{delim_err}"
+
+                # For pure JS, run node -c if node is available
+                if rel_path.endswith((".js", ".mjs")):
+                    proc = subprocess.run(["node", "-c", str(full_path)], capture_output=True, text=True)
+                    if proc.returncode != 0:
+                        return False, f"StaticSyntaxError in '{rel_path}':\n{proc.stderr}"
+            except Exception as e:
+                logger.debug(f"Static check error on {rel_path}: {e}")
+
     return True, ""
 
 
