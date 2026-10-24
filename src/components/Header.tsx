@@ -44,6 +44,10 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>T = 0.0 Deterministic</span>
                 </span>
+                <span className="px-1.5 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider bg-indigo-950 text-indigo-300 border border-indigo-800/80 rounded flex items-center space-x-1" title="Real-Time File Watcher Daemon">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                  <span>Watcher Active</span>
+                </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">
                 AST Codebase Memory • Two-Stage RRF Reranking • Bounded 3-Retry Harness • LangGraph CRAG

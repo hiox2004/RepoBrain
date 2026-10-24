@@ -118,3 +118,4 @@ if __name__ == "__main__":
         sys.stdout.reconfigure(encoding="utf-8")
     results = run_scientific_benchmarks()
     print(json.dumps(results, indent=2))
+

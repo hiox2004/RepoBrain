@@ -190,6 +190,133 @@ app = FastAPI(lifespan=lifespan)""",
                 start_line=10,
                 end_line=25,
             ),
+            TemplateBlueprint(
+                blueprint_id=uuid4(),
+                repo_name="langchain-ai/langgraph-multi-agent",
+                file_path="src/agents/supervisor.py",
+                symbol_name="LangGraph.MultiAgentSupervisor",
+                stack_domain="agentic_ai",
+                description="LangGraph multi-agent supervisor pattern with dynamic tool routing, state passing, and human-in-the-loop review.",
+                code_snippet="""from typing import Annotated, Literal, TypedDict
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import BaseMessage
+
+class SupervisorState(TypedDict):
+    messages: Annotated[list[BaseMessage], "Conversation history"]
+    next_worker: Literal["researcher", "coder", "reviewer", "FINISH"]
+
+def supervisor_node(state: SupervisorState) -> dict:
+    # Router logic deciding next specialized agent
+    return {"next_worker": "coder"}
+
+workflow = StateGraph(SupervisorState)
+workflow.add_node("supervisor", supervisor_node)
+workflow.add_conditional_edges("supervisor", lambda s: s["next_worker"])
+workflow.add_edge(START, "supervisor")
+app = workflow.compile()""",
+                start_line=1,
+                end_line=20,
+            ),
+            TemplateBlueprint(
+                blueprint_id=uuid4(),
+                repo_name="pola-rs/polars-recipes",
+                file_path="src/analytics/pipeline.py",
+                symbol_name="Polars.DataAnalyticsPipeline",
+                stack_domain="data_science",
+                description="High-performance streaming Polars LazyFrame transformation pipeline with window functions and schema validation.",
+                code_snippet="""import polars as pl
+
+def execute_analytics_pipeline(source_parquet: str) -> pl.DataFrame:
+    # Processes massive datasets with zero-copy Rust streaming and query optimization
+    return (
+        pl.scan_parquet(source_parquet)
+        .filter(pl.col("status") == "SUCCESS")
+        .with_columns([
+            pl.col("timestamp").str.to_datetime().alias("dt"),
+            (pl.col("latency_ms") / 1000.0).alias("latency_sec"),
+        ])
+        .group_by_dynamic("dt", every="1h")
+        .agg([
+            pl.col("latency_sec").quantile(0.99).alias("p99_latency"),
+            pl.col("request_id").count().alias("throughput_req_per_hour"),
+        ])
+        .collect(streaming=True)
+    )""",
+                start_line=1,
+                end_line=18,
+            ),
+            TemplateBlueprint(
+                blueprint_id=uuid4(),
+                repo_name="pytorch/serve-template",
+                file_path="app/ml/inference.py",
+                symbol_name="PyTorch.InferenceService",
+                stack_domain="data_science",
+                description="Production PyTorch model inference service with GPU auto-detection, torch.no_grad, and batched evaluation.",
+                code_snippet="""import torch
+import torch.nn as nn
+from typing import List
+
+class ProductionModel(nn.Module):
+    def __init__(self, in_features: int = 128, num_classes: int = 2):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_features, 64),
+            nn.LayerNorm(64),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(64, num_classes),
+        )
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
+
+@torch.inference_mode()
+def run_batch_inference(model: nn.Module, batch: List[List[float]], device: str = "cpu") -> List[int]:
+    tensor = torch.tensor(batch, dtype=torch.float32, device=device)
+    logits = model(tensor)
+    return torch.argmax(logits, dim=-1).tolist()""",
+                start_line=1,
+                end_line=24,
+            ),
+            TemplateBlueprint(
+                blueprint_id=uuid4(),
+                repo_name="clean-architecture/ports-adapters",
+                file_path="src/domain/ports.py",
+                symbol_name="Architecture.CleanHexagonalPorts",
+                stack_domain="clean_architecture",
+                description="Hexagonal Architecture (Ports & Adapters) with Abstract Base Class repository and Domain-Driven Design.",
+                code_snippet="""from abc import ABC, abstractmethod
+from typing import Optional
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class CustomerEntity:
+    customer_id: str
+    email: str
+    is_active: bool = True
+
+class CustomerRepositoryPort(ABC):
+    # Driven port decoupling core domain from SQL/NoSQL databases
+    @abstractmethod
+    def find_by_id(self, customer_id: str) -> Optional[CustomerEntity]: ...
+    
+    @abstractmethod
+    def save(self, customer: CustomerEntity) -> None: ...
+
+class ActivateCustomerUseCase:
+    # Driving use-case executing pure domain business logic
+    def __init__(self, repo: CustomerRepositoryPort) -> None:
+        self.repo = repo
+
+    def execute(self, customer_id: str) -> bool:
+        customer = self.repo.find_by_id(customer_id)
+        if not customer:
+            return False
+        updated = CustomerEntity(customer.customer_id, customer.email, is_active=True)
+        self.repo.save(updated)
+        return True""",
+                start_line=1,
+                end_line=30,
+            ),
         ])
 
     def search_templates(self, query: str, stack_domain: str = "all", limit: int = 3) -> List[TemplateBlueprint]:

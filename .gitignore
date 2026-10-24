@@ -18,5 +18,8 @@ __pycache__/
 *.db
 *.db-journal
 
-# Test scratch dirs
+# RepoBrain local runtime caches & scratch
 test_scratch_*
+scratch/
+.repobrain/kb_cache/
+.repobrain/vector_cache.json

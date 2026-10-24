@@ -86,5 +86,21 @@ class TestRepoBrainCLI(unittest.TestCase):
             self.assertIn("benchmark_summary", output)
             self.assertIn("average_token_reduction_pct", output)
 
+    def test_cli_watch_once(self):
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            with patch("sys.argv", ["repobrain", "watch", "--once"]):
+                main()
+            output = fake_out.getvalue()
+            self.assertIn("Starting RepoBrain File Watcher daemon", output)
+            self.assertIn("Sync completed", output)
+
+    def test_cli_heal_clean(self):
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            with patch("sys.argv", ["repobrain", "heal", "tests/test_ast_chunker.py"]):
+                main()
+            output = fake_out.getvalue()
+            self.assertIn("Autonomous CI Self-Healing initiated", output)
+            self.assertIn("Healing Verdict: PASS", output)
+
 if __name__ == "__main__":
     unittest.main()

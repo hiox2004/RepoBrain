@@ -232,6 +232,70 @@ flowchart TD
 
 ---
 
+## 7.5 CLI Reference, Real-Time Watcher & Autonomous CI Self-Healing
+
+RepoBrain provides a complete production CLI interface for developers, CI/CD runners, and background daemons:
+
+```powershell
+# 1. Real-Time File Watcher Daemon (Background incremental AST sync, zero cold-start)
+repobrain watch [--repo .] [--interval 0.5]
+repobrain watch --once   # One-shot incremental scan and sync
+
+# 2. Autonomous CI & Test Self-Healing Bot
+repobrain heal tests/test_payment.py [--target-file src/payment.py] [--max-iterations 3] [--output-file report.md]
+
+# 3. Static Blast Radius & Call Graph Analysis
+repobrain blast-radius compute_git_blob_sha [--file src/repobrain/ast_chunker.py]
+
+# 4. Quantitative Token Compression & Speed Benchmarks
+repobrain benchmark
+
+# 5. Hybrid Search (Two-Stage RRF k=60 + Dense Cross-Encoder)
+repobrain search "settleInvoiceById" --top-k 5
+
+# 6. 5-Phase CRAG Research Engine
+repobrain research "LangGraph multi-agent supervisor patterns" --domain agentic_ai
+
+# 7. Template Stockroom Blueprint Scaffolding
+repobrain templates "Polars DataAnalyticsPipeline" --domain data_science
+repobrain templates "LangGraph MultiAgentSupervisor" --domain agentic_ai
+repobrain templates "CleanHexagonalPorts" --domain clean_architecture
+
+# 8. 4-Gate Deterministic Stress Test
+repobrain verify
+```
+
+### Autonomous GitHub Actions CI Self-Healing
+RepoBrain includes `.github/workflows/repobrain-heal.yml` for automated PR remediation:
+1. When a PR test fails in CI, RepoBrain catches the error signature and local stack trace.
+2. It analyzes the blast radius of the failing symbol to map affected callers and test suites.
+3. It checks Layer 2 episodic memory for past post-mortems matching the bug signature.
+4. It applies bounded surgical patches ($\le 3$ retries) with strict non-destructive rollback.
+5. It posts a structured, formatted post-mortem comment on the GitHub PR.
+
+---
+
+## 7.6 Agentic AI, Data Science & Clean Architecture Intelligence
+
+RepoBrain natively understands and scaffolds modern high-performance stacks:
+
+1. **Agentic AI & LangGraph StateGraphs (`agentic_ai`):**
+   - AST extraction recognizes `TypedDict` agent state schemas, `@tool` decorators, and LangGraph `StateGraph` workflows.
+   - Pre-seeded ADR: `ADR_agentic_ai_langgraph.md` (StateGraph vs linear chains, supervisor routing, human-in-the-loop review).
+   - Blueprint: `LangGraph.MultiAgentSupervisor` for coordinated multi-agent swarms.
+
+2. **Data Science & Analytics Pipelines (`data_science`):**
+   - AST extraction parses Polars streaming pipelines, Pandas DataFrames, and PyTorch `nn.Module` neural architectures.
+   - Pre-seeded ADR: `ADR_data_science_analytics.md` (Polars LazyFrame vs Pandas eager evaluation, zero-copy streaming, batched PyTorch GPU inference).
+   - Blueprint: `Polars.DataAnalyticsPipeline` and `PyTorch.InferenceService`.
+
+3. **Modern App Development & Clean Architecture (`clean_architecture`):**
+   - AST extraction classifies Abstract Base Classes (`ABC`), Protocols, and `@dataclass` domain entities alongside their methods.
+   - Pre-seeded ADR: `ADR_clean_coding_principles.md` (Hexagonal Ports & Adapters, SOLID boundary enforcement, Dependency Inversion).
+   - Blueprint: `Architecture.CleanHexagonalPorts`.
+
+---
+
 ## 8. Running the Full-Stack Workbench & Interactive Academy
 
 RepoBrain includes a dark-mode React workbench with 8 tabs, including an interactive CTO Masterguide:

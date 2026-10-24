@@ -1,18 +1,10 @@
 [
   {
-    "episode_id": "3af2aaef-2a57-4f81-b01a-4adc175eee3c",
+    "episode_id": "9efe3f9e-7361-46a2-b684-96bbc1df72f1",
     "error_signature": "AssertionError: mismatch",
     "target_symbol": "LedgerService.settleInvoiceById",
     "file_path": "src/billing/ledger.py",
     "root_cause_summary": "Use .quantize(Decimal('0.01')) for currency settlements.",
     "resolution_diff": "--- patch"
-  },
-  {
-    "episode_id": "4e5b70de-84c4-4c73-893d-ec412f659f1a",
-    "error_signature": "AssertionError: Decimal('120.0000') != Decimal('120.00')",
-    "target_symbol": "LedgerService.settleInvoiceById",
-    "file_path": "src/billing/ledger.py",
-    "root_cause_summary": "Decimal arithmetic without explicit quantization preserves full multiplicand scale; requires .quantize(Decimal('0.01')) for currency settlements.",
-    "resolution_diff": "--- a/src/billing/ledger.py\n+++ b/src/billing/ledger.py\n@@ -21,1 +21,1 @@\n-        return req.subtotal * (Decimal(\"1.00\") - self.tax_rate)\n+        return (req.subtotal * (Decimal(\"1.00\") + self.tax_rate)).quantize(Decimal(\"0.01\"))"
   }
 ]

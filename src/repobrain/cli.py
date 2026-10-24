@@ -155,6 +155,50 @@ def cmd_benchmark(args: argparse.Namespace) -> None:
     results = run_scientific_benchmarks(repo_root=Path(args.repo).resolve())
     print(json.dumps(results, indent=2))
 
+
+
+def cmd_watch(args: argparse.Namespace) -> None:
+    from repobrain.watcher import RetrieverWatcher
+    repo_root = Path(args.repo).resolve()
+    print(f"[*] Starting RepoBrain File Watcher daemon on {repo_root} (interval: {args.interval}s)")
+    watcher = RetrieverWatcher(repo_root=repo_root, poll_interval_seconds=args.interval)
+    if args.once:
+        synced = watcher.sync_once()
+        print(f"[+] Sync completed. Synced {len(synced)} changed file(s): {synced}")
+        return
+
+    watcher.start()
+    print("[+] Watcher running in background. Press Ctrl+C to terminate.")
+    try:
+        while True:
+            import time
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n[*] Stopping Watcher daemon...")
+        watcher.stop()
+        print("[+] Daemon gracefully stopped.")
+
+
+def cmd_heal(args: argparse.Namespace) -> None:
+    from repobrain.ci_heal import CIHealingOrchestrator
+    repo_root = Path(args.repo).resolve()
+    print(f"[*] Autonomous CI Self-Healing initiated on '{args.test_path}'...")
+    orchestrator = CIHealingOrchestrator(repo_root=repo_root)
+    result = orchestrator.diagnose_and_heal(
+        test_path=args.test_path,
+        target_file=args.target_file,
+        max_iterations=args.max_iterations,
+    )
+    print(f"\n[+] Healing Verdict: {result['status']}")
+    print(f"[+] Message: {result['message']}")
+    if result.get("pr_comment_markdown"):
+        print("\n--- GitHub PR Comment Markdown ---\n")
+        print(result["pr_comment_markdown"])
+    if args.output_file and result.get("pr_comment_markdown"):
+        out_p = Path(args.output_file).resolve()
+        out_p.write_text(result["pr_comment_markdown"], encoding="utf-8")
+        print(f"\n[+] Wrote PR comment to {out_p}")
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="repobrain",
@@ -202,6 +246,20 @@ def main() -> None:
     # verify
     p_verify = subparsers.add_parser("verify", help="Run the 4-Gate Deterministic Stress Test")
 
+    # watch
+    p_watch = subparsers.add_parser("watch", help="Start background file watcher daemon for real-time AST sync")
+    p_watch.add_argument("--repo", default=".", help="Repository root path")
+    p_watch.add_argument("--interval", type=float, default=0.5, help="Polling interval in seconds")
+    p_watch.add_argument("--once", action="store_true", help="Run a single sync check and exit")
+
+    # heal
+    p_heal = subparsers.add_parser("heal", help="Autonomous CI self-healing for failing test suites")
+    p_heal.add_argument("test_path", help="Path to failing test suite")
+    p_heal.add_argument("--target-file", default=None, help="Target implementation file")
+    p_heal.add_argument("--max-iterations", type=int, default=3, help="Max self-healing iterations")
+    p_heal.add_argument("--repo", default=".", help="Repository root path")
+    p_heal.add_argument("--output-file", default=None, help="Output markdown report file for PR comment")
+
     args = parser.parse_args()
     if args.command == "index":
         cmd_index(args)
@@ -219,6 +277,10 @@ def main() -> None:
         cmd_blast_radius(args)
     elif args.command == "benchmark":
         cmd_benchmark(args)
+    elif args.command == "watch":
+        cmd_watch(args)
+    elif args.command == "heal":
+        cmd_heal(args)
 
 
 if __name__ == "__main__":

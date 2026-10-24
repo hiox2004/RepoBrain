@@ -144,24 +144,42 @@ class ASTCodeChunker:
                 children.append(child)
             elif isinstance(stmt, ast.ClassDef):
                 methods = [m for m in stmt.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]
-                if len(methods) == 0:
-                    # Guardrail #2: Methodless classes (e.g. Pydantic BaseModel) -> type_definition
+                base_names = [self._get_ast_id(b) for b in stmt.bases]
+                dec_names = [self._get_ast_id(d) for d in stmt.decorator_list]
+                is_structural_type = (
+                    len(methods) == 0
+                    or any(b in ("ABC", "TypedDict", "BaseModel", "Protocol", "Module", "BaseEstimator") or b.endswith((".ABC", ".TypedDict", ".BaseModel", ".Protocol", ".Module", ".BaseEstimator")) for b in base_names)
+                    or any("dataclass" in d for d in dec_names)
+                )
+                if is_structural_type:
+                    # Guardrail #2 & Agentic/Domain models -> type_definition
                     child = self._extract_py_class_as_typedef(stmt, source_bytes, line_offsets, parent_node.parent_id, file_path)
                     children.append(child)
-                else:
-                    for method in methods:
-                        child = self._extract_py_function(
-                            method,
-                            source_bytes,
-                            line_offsets,
-                            parent_node.parent_id,
-                            file_path,
-                            "method",
-                            enclosing_class=stmt.name,
-                        )
-                        children.append(child)
+
+                for method in methods:
+                    child = self._extract_py_function(
+                        method,
+                        source_bytes,
+                        line_offsets,
+                        parent_node.parent_id,
+                        file_path,
+                        "method",
+                        enclosing_class=stmt.name,
+                    )
+                    children.append(child)
 
         return parent_node, children
+
+    @staticmethod
+    def _get_ast_id(node: Any) -> str:
+        if isinstance(node, ast.Name):
+            return node.id
+        elif isinstance(node, ast.Attribute):
+            val = ASTCodeChunker._get_ast_id(node.value)
+            return f"{val}.{node.attr}" if val else node.attr
+        elif isinstance(node, ast.Call):
+            return ASTCodeChunker._get_ast_id(node.func)
+        return ""
 
     def _extract_py_function(
         self,
