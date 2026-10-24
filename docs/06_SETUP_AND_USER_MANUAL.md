@@ -263,6 +263,9 @@ repobrain templates "CleanHexagonalPorts" --domain clean_architecture
 
 # 8. 4-Gate Deterministic Stress Test
 repobrain verify
+
+# 9. Multi-Agent Local Swarm Mesh (LangGraph Native)
+repobrain swarm "Fix payment precision bug" [--target-file src/service.py] [--test-path tests/test_service.py] [--max-iterations 3]
 ```
 
 ### Autonomous GitHub Actions CI Self-Healing
@@ -293,6 +296,29 @@ RepoBrain natively understands and scaffolds modern high-performance stacks:
    - AST extraction classifies Abstract Base Classes (`ABC`), Protocols, and `@dataclass` domain entities alongside their methods.
    - Pre-seeded ADR: `ADR_clean_coding_principles.md` (Hexagonal Ports & Adapters, SOLID boundary enforcement, Dependency Inversion).
    - Blueprint: `Architecture.CleanHexagonalPorts`.
+
+---
+
+## 7.7 One-Click VS Code, Cursor & Windsurf Extension
+
+RepoBrain includes a zero-dependency editor extension in `vscode-extension/` providing seamless developer ergonomics:
+
+### Core Capabilities
+* **⚡ Live Static Blast Radius CodeLens:** Attaches clickable annotations directly above functions and classes in Python and TypeScript/JavaScript. Hover or click to see dependent callers, risk levels, and associated test suites.
+* **🔧 1-Click Autonomous CI Self-Healing (`repobrain.healTest`):** Runs the CI self-healing bot directly from the editor, automatically diagnosing test failures, consulting episodic memory, and applying verified fixes.
+* **🐝 Multi-Agent Swarm Dispatch (`repobrain.swarmTask`):** Dispatches LangGraph autonomous teams (Architect $	o$ Coder $	o$ Tester $	o$ Supervisor) on natural language tasks.
+* **🌐 Real-Time Status Bar:** Displays RepoBrain engine status with 1-click access to the local React Workbench (`http://localhost:5173`).
+
+### Compiling the Extension
+```powershell
+# Compile both the React workbench and the VS Code extension:
+npm run build:all
+
+# Or compile the extension individually:
+npm run build:extension
+```
+
+To sideload into VS Code, Cursor, or Windsurf: open the `vscode-extension/` directory in VS Code and press `F5` to launch an Extension Development Host, or run `npx vsce package` to produce a `.vsix` file.
 
 ---
 

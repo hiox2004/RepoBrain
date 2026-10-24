@@ -199,6 +199,29 @@ def cmd_heal(args: argparse.Namespace) -> None:
         out_p.write_text(result["pr_comment_markdown"], encoding="utf-8")
         print(f"\n[+] Wrote PR comment to {out_p}")
 
+
+def cmd_swarm(args: argparse.Namespace) -> None:
+    from repobrain.swarm import MultiAgentSwarmMesh
+    repo_root = Path(args.repo).resolve()
+    print(f"[*] Launching RepoBrain Multi-Agent Swarm on '{args.task}'...")
+    swarm = MultiAgentSwarmMesh(repo_root=repo_root)
+    state = swarm.run_swarm(
+        task_description=args.task,
+        target_file=args.target_file,
+        test_path=args.test_path,
+        max_iterations=args.max_iterations,
+    )
+    print(f"\n[+] Swarm Status: {'SUCCESS' if state.get('success') else 'FAILED'}")
+    print(f"[+] Iterations Run: {state.get('iteration', 1)}/{args.max_iterations}")
+    print(f"[+] Surgical Rollback: {state.get('rolled_back', False)}")
+    print(f"[+] Summary: {state.get('summary', '')}")
+    if state.get("distilled_episode_id"):
+        print(f"[+] Distilled Episodic Memory ID: {state['distilled_episode_id']}")
+    if state.get("subtasks"):
+        print(f"\n[+] Architect Execution Plan:")
+        for st in state["subtasks"]:
+            print(f"    {st}")
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="repobrain",
@@ -260,6 +283,14 @@ def main() -> None:
     p_heal.add_argument("--repo", default=".", help="Repository root path")
     p_heal.add_argument("--output-file", default=None, help="Output markdown report file for PR comment")
 
+    # swarm
+    p_swarm = subparsers.add_parser("swarm", help="Autonomous LangGraph multi-agent swarm task execution")
+    p_swarm.add_argument("task", help="Goal or task description")
+    p_swarm.add_argument("--target-file", default=None, help="Target implementation file")
+    p_swarm.add_argument("--test-path", default=None, help="Associated test suite to verify")
+    p_swarm.add_argument("--max-iterations", type=int, default=3, help="Max self-healing iterations")
+    p_swarm.add_argument("--repo", default=".", help="Repository root path")
+
     args = parser.parse_args()
     if args.command == "index":
         cmd_index(args)
@@ -281,6 +312,8 @@ def main() -> None:
         cmd_watch(args)
     elif args.command == "heal":
         cmd_heal(args)
+    elif args.command == "swarm":
+        cmd_swarm(args)
 
 
 if __name__ == "__main__":

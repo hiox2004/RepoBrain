@@ -1,0 +1,106 @@
+{
+  "name": "repobrain-vscode",
+  "displayName": "RepoBrain: Autonomous Codebase Memory & Safety Harness",
+  "description": "Zero-bloat AST memory, live static blast radius, LangGraph multi-agent swarm, and autonomous CI test self-healing for VS Code, Cursor, and Windsurf.",
+  "version": "1.0.0",
+  "publisher": "repobrain",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Testing",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "repobrain",
+    "mcp",
+    "ai",
+    "langgraph",
+    "ast",
+    "blast-radius",
+    "self-healing",
+    "testing"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:python",
+    "onLanguage:typescript",
+    "onLanguage:javascript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascriptreact"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "repobrain.openWorkbench",
+        "title": "RepoBrain: Open Developer Workbench",
+        "icon": "$(browser)"
+      },
+      {
+        "command": "repobrain.healTest",
+        "title": "RepoBrain: Heal Failing Test Suite (Autonomous CI Engine)",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "repobrain.analyzeBlastRadius",
+        "title": "RepoBrain: Compute Static Blast Radius of Symbol",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "repobrain.searchCodebase",
+        "title": "RepoBrain: Two-Stage Hybrid Search (RRF k=60)",
+        "icon": "$(search)"
+      },
+      {
+        "command": "repobrain.swarmTask",
+        "title": "RepoBrain: Launch Autonomous Multi-Agent Swarm (LangGraph)",
+        "icon": "$(organization)"
+      },
+      {
+        "command": "repobrain.toggleWatcher",
+        "title": "RepoBrain: Toggle Real-Time File Watcher Daemon",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "repobrain.runGates",
+        "title": "RepoBrain: Run 4-Gate Deterministic Stress Test",
+        "icon": "$(check-all)"
+      }
+    ],
+    "configuration": {
+      "title": "RepoBrain",
+      "properties": {
+        "repobrain.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python executable with repobrain package available."
+        },
+        "repobrain.enableCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show live Blast Radius CodeLens above functions and classes."
+        },
+        "repobrain.workbenchUrl": {
+          "type": "string",
+          "default": "http://localhost:5173",
+          "description": "Local URL for RepoBrain Interactive React Workbench."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.7.2"
+  }
+}
+

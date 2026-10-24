@@ -102,5 +102,13 @@ class TestRepoBrainCLI(unittest.TestCase):
             self.assertIn("Autonomous CI Self-Healing initiated", output)
             self.assertIn("Healing Verdict: PASS", output)
 
+    def test_cli_swarm(self):
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            with patch("sys.argv", ["repobrain", "swarm", "Check AST parser", "--test-path", "tests/test_ast_chunker.py"]):
+                main()
+            output = fake_out.getvalue()
+            self.assertIn("Launching RepoBrain Multi-Agent Swarm", output)
+            self.assertIn("Swarm Status: SUCCESS", output)
+
 if __name__ == "__main__":
     unittest.main()

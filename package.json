@@ -7,6 +7,8 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "server": "node server.js",
     "build": "vite build",
+    "build:extension": "tsc -p vscode-extension/tsconfig.json",
+    "build:all": "npm run build && npm run build:extension",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
@@ -28,6 +30,7 @@
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@types/vscode": "^1.140.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.28.0",
     "tailwindcss": "^4.0.0",
