@@ -1,6 +1,6 @@
 [
   {
-    "episode_id": "79814f64-0086-4079-bee5-9f05da9952eb",
+    "episode_id": "ea14c6ae-8d6f-46d2-8ac1-2b320cb93f4b",
     "error_signature": "AssertionError: mismatch",
     "target_symbol": "LedgerService.settleInvoiceById",
     "file_path": "src/billing/ledger.py",

@@ -30,6 +30,12 @@ from repobrain.schemas import (
 from repobrain.template_stockroom import TemplateStockroom
 
 
+_RE_CAMEL_1 = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_RE_CAMEL_2 = re.compile(r"([a-z0-9])([A-Z])")
+_RE_DELIMS = re.compile(r"[_./:-]+")
+_RE_CLEAN = re.compile(r"[^a-zA-Z0-9_]+")
+
+
 def normalize_code_identifiers_py(input_text: str) -> str:
     """
     Python equivalent of Guardrail #3 PostgreSQL IMMUTABLE PARALLEL SAFE function:
@@ -37,9 +43,9 @@ def normalize_code_identifiers_py(input_text: str) -> str:
     """
     if not input_text:
         return ""
-    step1 = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", input_text)
-    step2 = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", step1)
-    step3 = re.sub(r"[_./:-]+", " ", step2)
+    step1 = _RE_CAMEL_1.sub(r"\1 \2", input_text)
+    step2 = _RE_CAMEL_2.sub(r"\1 \2", step1)
+    step3 = _RE_DELIMS.sub(" ", step2)
     lower_tokens = step3.lower()
     return f"{input_text} {lower_tokens}".strip()
 
@@ -49,7 +55,7 @@ def build_disjunction_tsquery(raw_query: str) -> Tuple[str, List[str]]:
     Guardrail #4: Build disjunction (|) tsquery over normalized query tokens (length > 1).
     """
     normalized = normalize_code_identifiers_py(raw_query)
-    clean = re.sub(r"[^a-zA-Z0-9_]+", " ", normalized)
+    clean = _RE_CLEAN.sub(" ", normalized)
     tokens = list(dict.fromkeys(t for t in clean.split() if len(t) > 1))
     tsquery_str = " | ".join(tokens)
     return tsquery_str, tokens

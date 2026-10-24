@@ -20,6 +20,7 @@ from repobrain.hybrid_retriever import HybridCodebaseRetriever
 from repobrain.pre_sandbox_guards import (
     BoundedHarnessState,
     SanctuaryPolicyGuard,
+    apply_git_patch_robust,
     extract_relevant_frames,
     fast_static_syntax_check,
     parse_diff_target_paths,
@@ -39,63 +40,8 @@ except ImportError:
 
 
 def apply_unified_diff_to_repo(repo_root: Path, patch_str: str) -> Tuple[bool, Optional[str]]:
-    """
-    Applies unified diff via git apply, with fallback to direct line replacement
-    for scratch/test environments that are not initialized git worktrees.
-    """
-    proc = subprocess.run(
-        ["git", "apply", "-"],
-        input=patch_str.encode("utf-8"),
-        capture_output=True,
-        cwd=repo_root,
-    )
-    if proc.returncode == 0:
-        return True, None
-
-    # Fallback to direct hunk application
-    try:
-        lines = patch_str.splitlines()
-        target_file = None
-        for line in lines:
-            if line.startswith("+++ b/"):
-                target_file = line[6:].strip()
-                break
-            elif line.startswith("+++ "):
-                target_file = line[4:].strip().lstrip("b/")
-                break
-
-        if not target_file:
-            return False, f"git apply failed: {proc.stderr.decode('utf-8', errors='replace')}"
-
-        full_target = (repo_root / target_file).resolve()
-        if not full_target.exists():
-            return False, f"Target file does not exist: {target_file}"
-
-        old_lines = []
-        new_lines = []
-        for line in lines:
-            if line.startswith("-") and not line.startswith("---"):
-                old_lines.append(line[1:])
-            elif line.startswith("+") and not line.startswith("+++"):
-                new_lines.append(line[1:])
-
-        content = full_target.read_text(encoding="utf-8")
-        # Normalize CRLF for matching
-        crlf = "\r\n" in content
-        content_norm = content.replace("\r\n", "\n")
-        old_block = "\n".join(old_lines)
-        new_block = "\n".join(new_lines)
-
-        if old_block in content_norm:
-            content_norm = content_norm.replace(old_block, new_block, 1)
-            if crlf:
-                content_norm = content_norm.replace("\n", "\r\n")
-            full_target.write_text(content_norm, encoding="utf-8")
-            return True, None
-
-        return False, f"git apply failed and hunk not matched: {proc.stderr.decode('utf-8', errors='replace')}"
-    except Exception as e:
-        return False, str(e)
+    """Delegates to centralized apply_git_patch_robust in pre_sandbox_guards."""
+    return apply_git_patch_robust(repo_root, patch_str)
 
 
 class SwarmState(TypedDict):

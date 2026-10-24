@@ -18,6 +18,14 @@ from uuid import uuid4
 
 from repobrain.schemas import ASTChildNode, ASTParentNode
 
+# Pre-compiled high-performance regular expressions for TypeScript/JavaScript symbol detection
+_RE_TS_ZOD = re.compile(r"^\s*(?:export\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*z\.")
+_RE_TS_TYPE = re.compile(r"^\s*(?:export\s+)?(interface|type)\s+([A-Za-z0-9_]+)")
+_RE_TS_CLASS = re.compile(r"^\s*(?:export\s+)?(?:abstract\s+)?class\s+([A-Za-z0-9_]+)")
+_RE_TS_METHOD = re.compile(r"^\s*(?:public\s+|private\s+|protected\s+|async\s+)*(?:async\s+)?([A-Za-z0-9_]+)\s*\(.*?\)")
+_RE_TS_FN = re.compile(r"^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function(?:\s+([A-Za-z0-9_]+))?")
+_RE_TS_ARROW = re.compile(r"^\s*(?:export\s+)?(?:default\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s+)?\(.*?\)\s*(?::\s*.*?)?\s*=>")
+
 
 def compute_git_blob_sha(source_bytes: bytes) -> str:
     """
@@ -296,7 +304,7 @@ class ASTCodeChunker:
             line = lines[i]
 
             # 1. Zod schema definition: export const FooSchema = z.object(...)
-            zod_match = re.match(r"^\s*(?:export\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*z\.", line)
+            zod_match = _RE_TS_ZOD.match(line)
             if zod_match:
                 symbol_name = zod_match.group(1)
                 start_line = i + 1
@@ -329,7 +337,7 @@ class ASTCodeChunker:
                 continue
 
             # 2. Interface or type definition (methodless schema)
-            type_match = re.match(r"^\s*(?:export\s+)?(interface|type)\s+([A-Za-z0-9_]+)", line)
+            type_match = _RE_TS_TYPE.match(line)
             if type_match:
                 symbol_name = type_match.group(2)
                 start_line = i + 1
@@ -363,7 +371,7 @@ class ASTCodeChunker:
                 continue
 
             # 3. TypeScript Class definitions and methods
-            class_match = re.match(r"^\s*(?:export\s+)?(?:abstract\s+)?class\s+([A-Za-z0-9_]+)", line)
+            class_match = _RE_TS_CLASS.match(line)
             if class_match:
                 class_name = class_match.group(1)
                 start_line = i + 1
@@ -383,7 +391,7 @@ class ASTCodeChunker:
                 found_methods = 0
                 for k in range(start_line - 1, end_line):
                     m_line = lines[k]
-                    m_match = re.match(r"^\s*(?:public\s+|private\s+|protected\s+|async\s+)*(?:async\s+)?([A-Za-z0-9_]+)\s*\(.*?\)", m_line)
+                    m_match = _RE_TS_METHOD.match(m_line)
                     if m_match and not m_line.strip().startswith("//") and not m_line.strip().startswith("/*"):
                         m_name = m_match.group(1)
                         if m_name not in ("if", "for", "while", "switch", "catch"):
@@ -433,8 +441,8 @@ class ASTCodeChunker:
                 continue
 
             # 4. Functions (including export default, async, Next.js Server Actions, Route Handlers, React Components)
-            fn_match = re.match(r"^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function(?:\s+([A-Za-z0-9_]+))?", line)
-            arrow_match = re.match(r"^\s*(?:export\s+)?(?:default\s+)?const\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s+)?\(.*?\)\s*(?::\s*.*?)?\s*=>", line)
+            fn_match = _RE_TS_FN.match(line)
+            arrow_match = _RE_TS_ARROW.match(line)
 
             if (fn_match and (fn_match.group(1) or "default" in line)) or arrow_match:
                 if arrow_match:

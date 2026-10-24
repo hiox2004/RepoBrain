@@ -127,6 +127,13 @@ export function deactivate() {
   if (outputChannel) outputChannel.dispose();
 }
 
+// Pre-compiled high-performance regular expressions for symbol matching
+const PY_FN_PATTERN = /^\s*(?:async\s+)?def\s+([a-zA-Z0-9_]+)\s*\(/;
+const PY_CLS_PATTERN = /^\s*class\s+([a-zA-Z0-9_]+)\s*(?:\(|$|:)/;
+const TS_FN_PATTERN = /^\s*(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z0-9_]+)\s*\(/;
+const TS_CONST_PATTERN = /^\s*(?:export\s+)?const\s+([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\(/;
+const TS_CLS_PATTERN = /^\s*(?:export\s+)?class\s+([a-zA-Z0-9_]+)\s*/;
+
 /**
  * CodeLens Provider displaying Blast Radius actions above function and class definitions.
  */
@@ -142,21 +149,14 @@ class BlastRadiusCodeLensProvider implements vscode.CodeLensProvider {
     const text = document.getText();
     const lines = text.split(/\r?\n/);
 
-    // Regex matchers for Python and TS/JS symbols
-    const pyFnPattern = /^\s*(?:async\s+)?def\s+([a-zA-Z0-9_]+)\s*\(/;
-    const pyClsPattern = /^\s*class\s+([a-zA-Z0-9_]+)\s*(?:\(|$|:)/;
-    const tsFnPattern = /^\s*(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z0-9_]+)\s*\(/;
-    const tsConstPattern = /^\s*(?:export\s+)?const\s+([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\(/;
-    const tsClsPattern = /^\s*(?:export\s+)?class\s+([a-zA-Z0-9_]+)\s*/;
-
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       let match =
-        line.match(pyFnPattern) ||
-        line.match(pyClsPattern) ||
-        line.match(tsFnPattern) ||
-        line.match(tsConstPattern) ||
-        line.match(tsClsPattern);
+        line.match(PY_FN_PATTERN) ||
+        line.match(PY_CLS_PATTERN) ||
+        line.match(TS_FN_PATTERN) ||
+        line.match(TS_CONST_PATTERN) ||
+        line.match(TS_CLS_PATTERN);
 
       if (match && match[1]) {
         const symbol = match[1];
